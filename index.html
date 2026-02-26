@@ -69,7 +69,14 @@
         .task-meta { font-size: 0.7rem; color: #9ca3af; display: block; margin-top: 2px; }
         .task-cost { font-weight: 800; color: #059669; }
 
-        .lista-header { font-size: 0.65rem; font-weight: 900; color: #64748b; margin: 15px 0 10px 5px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--primary); padding-left: 8px; }
+        .lista-header { 
+            font-size: 0.65rem; font-weight: 900; color: #64748b; margin: 15px 0 10px 5px; 
+            text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--primary); 
+            padding-left: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .btn-edit-lista { background: none; border: none; cursor: pointer; font-size: 0.9rem; padding: 2px 8px; opacity: 0.6; }
+        .btn-edit-lista:hover { opacity: 1; }
+
         .item-card { background: white; padding: 14px; border-radius: 18px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; border-left: 10px solid var(--primary); }
         .item-text-area { flex: 1; display: flex; align-items: center; justify-content: space-between; }
         .item-badge { font-size: 0.55rem; font-weight: 800; padding: 3px 7px; border-radius: 6px; text-transform: uppercase; color: #1f2937; }
@@ -364,7 +371,10 @@
             tarefasGlobais.filter(t => !t.concluida).forEach(t => {
                 const m = t.descricao.match(/\(([^)]+)\)/);
                 if (m) {
-                    const h = document.createElement('div'); h.className = 'lista-header'; h.innerText = `LISTA: ${t.descricao.split('(')[0].trim()}`; lista.appendChild(h);
+                    const h = document.createElement('div'); h.className = 'lista-header'; 
+                    h.innerHTML = `<span>LISTA: ${t.descricao.split('(')[0].trim()}</span>
+                                  <button class="btn-edit-lista" onclick="prepararEdicaoLista('${t.id}')">✏️ Editar Itens</button>`; 
+                    lista.appendChild(h);
                     m[1].split(',').map(i => i.trim()).filter(i => i !== "").forEach((item, idx) => {
                         const div = document.createElement('div'), ok = t.statusItens && t.statusItens[idx], cor = coresBlink[t.categoria] || '#eee';
                         div.className = `item-card`; div.style.borderLeftColor = cor;
@@ -412,6 +422,21 @@
         });
     };
 
+    window.prepararEdicaoLista = (id) => {
+        const t = tarefasGlobais.find(x => x.id === id); 
+        const m = t.descricao.match(/\(([^)]+)\)/);
+        if(m) {
+            idEdicao = id;
+            mudarAba('tarefas');
+            document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
+            document.getElementById('inputSubItens').value = m[1];
+            document.getElementById('selectCategoria').value = t.categoria;
+            document.getElementById('inputData').value = t.dataLimite;
+            document.getElementById('btnSalvar').innerText = "Atualizar Itens";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
     window.btnSalvarClick = async () => {
         const descBase = document.getElementById('inputTarefa').value.trim(), subItensRaw = document.getElementById('inputSubItens').value.trim();
         let custoStr = document.getElementById('inputCusto').value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
@@ -419,7 +444,7 @@
         if ((!descBase && !subItensRaw) || !data) return alert("Preencha descrição e data!");
         let descFinal = descBase || cat;
         if (subItensRaw !== "") descFinal += ` (${subItensRaw})`;
-        const dados = { descricao: descFinal, custo, dataLimite: data, hora, categoria: cat, recorrencia: rec, concluida: false, criadoEm: new Date(), statusItens: {} };
+        const dados = { descricao: descFinal, custo, dataLimite: data, hora, categoria: cat, recorrencia: rec, concluida: false, criadoEm: new Date(), statusItens: idEdicao ? (tarefasGlobais.find(x=>x.id===idEdicao).statusItens || {}) : {} };
         if (idEdicao) { await updateDoc(doc(db, "tarefas", idEdicao), dados); idEdicao = null; document.getElementById('btnSalvar').innerText = "Adicionar Tarefa"; }
         else { await addDoc(collection(db, "tarefas"), dados); }
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = "";
