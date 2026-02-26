@@ -414,6 +414,7 @@
                 const bateCat = catFiltro === "TODAS" || t.categoria === catFiltro;
                 return t.concluida && bateAno && bateMes && bateCat;
             });
+            // Ordenação do histórico: da mais antiga para a mais atual
             filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
         } else {
             filtradas = tarefasGlobais.filter(t => !t.concluida && (!t.recorrencia || t.recorrencia === "NENHUMA"));
