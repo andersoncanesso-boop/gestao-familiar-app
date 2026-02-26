@@ -55,6 +55,8 @@
         
         .card-vence-hoje { border-left-color: var(--danger) !important; background: #fff5f5; }
         .card-atrasada { border-left-color: var(--warning) !important; background: #fffbeb; }
+        .card-mes-atual { background: #fefce8 !important; border-left-color: #facc15 !important; }
+        
         .alert-icon-hoje { color: var(--danger); font-weight: 800; font-size: 0.7rem; margin-left: 5px; }
         .alert-icon-atrasado { color: var(--warning); font-weight: 800; font-size: 0.7rem; margin-left: 5px; }
 
@@ -365,7 +367,11 @@
         if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
         if (abaAtiva === 'tarefas') areaForm.classList.remove('hidden');
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
-        const hojeStr = new Date().toLocaleDateString('sv-SE');
+        const hoje = new Date();
+        const hojeStr = hoje.toLocaleDateString('sv-SE');
+        const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+        const anoAtual = hoje.getFullYear();
+
         let filtradas = [];
         if (abaAtiva === 'itens') {
             tarefasGlobais.filter(t => !t.concluida).forEach(t => {
@@ -387,7 +393,14 @@
             return;
         } 
         if (abaAtiva === 'cronograma') {
+            const ordemRecorrencia = { "DIÁRIA": 1, "SEMANAL": 2, "MENSAL": 3 };
             filtradas = tarefasGlobais.filter(t => t.recorrencia && t.recorrencia !== "NENHUMA" && !t.concluida);
+            
+            filtradas.sort((a, b) => {
+                if (a.dataLimite !== b.dataLimite) return a.dataLimite.localeCompare(b.dataLimite);
+                return (ordemRecorrencia[a.recorrencia] || 99) - (ordemRecorrencia[b.recorrencia] || 99);
+            });
+
             const h = document.createElement('div'); h.className = 'lista-header'; h.innerText = `CRONOGRAMA RECORRENTE`; lista.appendChild(h);
         } else if (abaAtiva === 'historico') {
             const anoFiltro = document.getElementById('filtroAnoHist').value;
@@ -401,21 +414,30 @@
                 const bateCat = catFiltro === "TODAS" || t.categoria === catFiltro;
                 return t.concluida && bateAno && bateMes && bateCat;
             });
-            filtradas.sort((a, b) => b.dataLimite.localeCompare(a.dataLimite));
+            filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
         } else {
             filtradas = tarefasGlobais.filter(t => !t.concluida && (!t.recorrencia || t.recorrencia === "NENHUMA"));
+            filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
         }
+
         filtradas.forEach(t => {
-            const div = document.createElement('div'), cor = coresBlink[t.categoria] || '#ffffff', venceHoje = t.dataLimite === hojeStr && !t.concluida, atrasada = t.dataLimite < hojeStr && !t.concluida;
+            const div = document.createElement('div'), cor = coresBlink[t.categoria] || '#ffffff';
+            const venceHoje = t.dataLimite === hojeStr && !t.concluida;
+            const atrasada = t.dataLimite < hojeStr && !t.concluida;
+            const [tAno, tMes] = t.dataLimite.split('-');
+            const ehMesAtual = tMes === mesAtual && tAno === String(anoAtual);
+
             let classeExtra = "", rotuloAlerta = "";
             if (venceHoje) { classeExtra = "card-vence-hoje"; rotuloAlerta = '<span class="alert-icon-hoje">⚠️ VENCE HOJE</span>'; }
             else if (atrasada) { classeExtra = "card-atrasada"; rotuloAlerta = '<span class="alert-icon-atrasado">🚨 ATRASADA</span>'; }
+            else if (abaAtiva === 'cronograma' && ehMesAtual) { classeExtra = "card-mes-atual"; }
             else if (t.descricao.includes('(') && !t.concluida) { classeExtra = "card-blink"; }
+
             div.style.setProperty('--blink-color', cor); div.className = `tarefa-card ${classeExtra}`;
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
                 <div class="info-area"><span class="cat-badge">${t.categoria}</span>
                 <span class="task-name">${t.descricao.split('(')[0]} ${rotuloAlerta}</span>
-                <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'}</span>
+                <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia ? `(${t.recorrencia})` : ''}</span>
                 ${t.custo > 0 ? `<span class="task-meta task-cost">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
                 <div class="action-btns"><button class="btn-icon" onclick="prepararEdicao('${t.id}')">✏️</button><button class="btn-icon" onclick="exterminar('${t.id}')">🗑️</button></div>`;
             lista.appendChild(div);
@@ -444,7 +466,17 @@
         if ((!descBase && !subItensRaw) || !data) return alert("Preencha descrição e data!");
         let descFinal = descBase || cat;
         if (subItensRaw !== "") descFinal += ` (${subItensRaw})`;
-        const dados = { descricao: descFinal, custo, dataLimite: data, hora, categoria: cat, recorrencia: rec, concluida: false, criadoEm: new Date(), statusItens: idEdicao ? (tarefasGlobais.find(x=>x.id===idEdicao).statusItens || {}) : {} };
+        const dados = { 
+            descricao: descFinal, 
+            custo, 
+            dataLimite: data, 
+            hora, 
+            categoria: cat, 
+            recorrencia: rec, 
+            concluida: false, 
+            criadoEm: new Date(), 
+            statusItens: idEdicao ? (tarefasGlobais.find(x=>x.id===idEdicao).statusItens || {}) : {} 
+        };
         if (idEdicao) { await updateDoc(doc(db, "tarefas", idEdicao), dados); idEdicao = null; document.getElementById('btnSalvar').innerText = "Adicionar Tarefa"; }
         else { await addDoc(collection(db, "tarefas"), dados); }
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = "";
