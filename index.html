@@ -167,13 +167,25 @@
 
         <div id="areaFiltroHistorico" class="hidden">
             <div class="filter-section">
-                <div style="display: flex; gap: 10px;">
-                    <div class="filter-group" style="flex: 1;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="filter-group" style="flex: 1; min-width: 80px;">
                         <span class="filter-label">Ano</span>
                         <select id="filtroAnoHist" class="filter-select-hist" onchange="renderizar()">
                         </select>
                     </div>
-                    <div class="filter-group" style="flex: 2;">
+                    <div class="filter-group" style="flex: 1; min-width: 100px;">
+                        <span class="filter-label">Mês</span>
+                        <select id="filtroMesHist" class="filter-select-hist" onchange="renderizar()">
+                            <option value="TODOS">TODOS</option>
+                            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                            <option value="03">Março</option><option value="04">Abril</option>
+                            <option value="05">Maio</option><option value="06">Junho</option>
+                            <option value="07">Julho</option><option value="08">Agosto</option>
+                            <option value="09">Setembro</option><option value="10">Outubro</option>
+                            <option value="11">Novembro</option><option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="flex: 2; min-width: 150px;">
                         <span class="filter-label">Categoria</span>
                         <select id="filtroCategoriaHist" class="filter-select-hist" onchange="renderizar()">
                             <option value="TODAS">TODAS</option>
@@ -369,8 +381,16 @@
             const h = document.createElement('div'); h.className = 'lista-header'; h.innerText = `CRONOGRAMA RECORRENTE`; lista.appendChild(h);
         } else if (abaAtiva === 'historico') {
             const anoFiltro = document.getElementById('filtroAnoHist').value;
+            const mesFiltro = document.getElementById('filtroMesHist').value;
             const catFiltro = document.getElementById('filtroCategoriaHist').value;
-            filtradas = tarefasGlobais.filter(t => t.concluida && t.dataLimite.startsWith(anoFiltro) && (catFiltro === "TODAS" || t.categoria === catFiltro));
+            
+            filtradas = tarefasGlobais.filter(t => {
+                const [ano, mes] = t.dataLimite.split('-');
+                const bateAno = ano === anoFiltro;
+                const bateMes = mesFiltro === "TODOS" || mes === mesFiltro;
+                const bateCat = catFiltro === "TODAS" || t.categoria === catFiltro;
+                return t.concluida && bateAno && bateMes && bateCat;
+            });
             filtradas.sort((a, b) => b.dataLimite.localeCompare(a.dataLimite));
         } else {
             filtradas = tarefasGlobais.filter(t => !t.concluida && (!t.recorrencia || t.recorrencia === "NENHUMA"));
