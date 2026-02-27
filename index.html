@@ -24,7 +24,6 @@
         }
 
         .logo-area { display: flex; align-items: center; gap: 12px; }
-        /* Ajuste exclusivo para deixar a imagem maior e mais larga */
         .logo-img { width: 65px; height: 65px; border-radius: 15px; object-fit: cover; background: white; border: 2px solid rgba(255,255,255,0.8); }
         .logo-text { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
         
@@ -537,8 +536,13 @@
     window.fazerLogoff = () => signOut(auth).then(() => location.reload());
     document.getElementById('btnLogin').onclick = () => signInWithPopup(auth, provider);
 
+    /* MODIFICAÇÃO SOLICITADA: Adicionado o redirecionamento para a aba principal ao editar */
     window.prepararEdicao = (id) => {
         const t = tarefasGlobais.find(x => x.id === id); idEdicao = id;
+        
+        // Redireciona para a aba principal (Tarefas)
+        mudarAba('tarefas');
+        
         document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
         const inputC = document.getElementById('inputCusto');
         inputC.value = t.custo.toFixed(2).replace(".", ",");
