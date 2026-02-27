@@ -109,19 +109,31 @@
         .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 5px; }
         h4 { margin: 15px 0 5px 0; font-size: 0.9rem; color: #1e1b4b; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* ESTILO PARA IMPRESSÃO */
+        /* ESTILO PARA IMPRESSÃO - ATUALIZADO PARA INCLUIR GRÁFICOS */
         @media print {
-            body { background: white; padding: 0; }
-            header, .nav-right, .btn-lock, .btn-print, .btn-backup, label.btn-backup, .chart-container, .filter-section, .action-btns, .check-area { display: none !important; }
+            body { background: white; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            header, .nav-right, .btn-lock, .btn-print, .btn-backup, label.btn-backup, .filter-section, .action-btns, .check-area { display: none !important; }
             .container { width: 100%; max-width: 100%; margin: 0; }
             .admin-panel { box-shadow: none; padding: 0; }
-            .stat-row { margin-bottom: 30px; border: 1px solid #eee; padding: 10px; border-radius: 10px; }
+            .stat-row { margin-bottom: 30px; border: 1px solid #eee; padding: 10px; border-radius: 10px; display: flex !important; flex-wrap: nowrap !important; }
+            .stat-box { border: 1px solid #eee; margin: 2px; flex: 1 !important; }
             .cat-costs-list { background: white; border: 1px solid #eee; }
             .cat-cost-item { border-bottom: 1px solid #eee; }
-            h1, h4 { color: black !important; text-align: left; }
+            h1, h4 { color: black !important; text-align: left; margin-top: 20px; }
             .logo-area { display: flex !important; margin-bottom: 20px; border-bottom: 2px solid #1e1b4b; padding-bottom: 10px; width: 100%; }
-            .logo-img { filter: grayscale(1); border: 1px solid black; }
+            .logo-img { filter: grayscale(0) !important; border: 1px solid #eee; }
             .logo-text { color: black !important; }
+            /* Regras para os gráficos na impressão */
+            .chart-container { 
+                display: block !important; 
+                background: white !important;
+                border: 1px solid #eee !important;
+                width: 100% !important; 
+                max-width: 500px; 
+                margin: 0 auto 20px auto; 
+                page-break-inside: avoid; 
+            }
+            canvas { max-width: 100% !important; height: auto !important; }
         }
     </style>
 </head>
