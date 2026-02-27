@@ -308,7 +308,6 @@
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithPopup, onAuthStateChanged, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // CONFIGURAÇÃO OFICIAL DO SEU PROJETO
     const firebaseConfig = { 
         apiKey: "AIzaSyBG9XmFduYzpXhYcWF9UPSbGa-w2GZ3cKc", 
         authDomain: "gestao-familiar-ac7d6.firebaseapp.com", 
@@ -629,25 +628,33 @@
 
     function atualizarGraficos(dM, dC, dA) {
         if(chartM) chartM.destroy(); if(chartC) chartC.destroy(); if(chartA) chartA.destroy();
-        
         const coresCategorias = {
             "GERAL": "#6366f1", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARRO": "#f44336",
             "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63",
             "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3"
         };
-
         const labelsC = Object.keys(dC);
         const backgroundColorsC = labelsC.map(cat => coresCategorias[cat] || '#cbd5e1');
-
         chartM = new Chart(document.getElementById('chartMensal'), { type: 'line', data: { labels: Object.keys(dM), datasets: [{ label: 'R$', data: Object.values(dM), borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] } });
         chartC = new Chart(document.getElementById('chartCategoria'), { type: 'doughnut', data: { labels: labelsC, datasets: [{ data: Object.values(dC), backgroundColor: backgroundColorsC }] } });
         chartA = new Chart(document.getElementById('chartAnual'), { type: 'bar', data: { labels: Object.keys(dA), datasets: [{ label: 'Ano', data: Object.values(dA), backgroundColor: '#a855f7', borderRadius: 8 }] } });
     }
 
+    /* MODIFICAÇÃO SOLICITADA: FUNÇÕES DE BACKUP COM NOME PERSONALIZADO E DATA */
     window.exportarBackup = () => { 
         const pack = { tarefas: tarefasGlobais, balancos: balancosPermanentes, exportadoEm: new Date() };
         const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pack, null, 2)); 
-        const a = document.createElement('a'); a.setAttribute("href", ds); a.setAttribute("download", `Backup_Gestao.json`); a.click(); 
+        
+        const d = new Date();
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth() + 1).padStart(2, '0');
+        const ano = d.getFullYear();
+        const nomeArquivo = `Gestão familiar - ${dia}-${mes}-${ano}.json`;
+        
+        const a = document.createElement('a'); 
+        a.setAttribute("href", ds); 
+        a.setAttribute("download", nomeArquivo); 
+        a.click(); 
     };
 
     window.importarBackup = (event) => {
@@ -658,16 +665,25 @@
                 const dados = JSON.parse(e.target.result);
                 const tParaRestaurar = dados.tarefas || [];
                 const bParaRestaurar = dados.balancos || [];
-                if (confirm(`Restaurar backup?`)) {
+                if (confirm(`Deseja restaurar o backup de "${file.name}"? Isso substituirá os dados atuais.`)) {
                     const snapT = await getDocs(collection(db, "tarefas"));
                     await Promise.all(snapT.docs.map(d => deleteDoc(doc(db, "tarefas", d.id))));
+                    const snapB = await getDocs(collection(db, "balancos"));
+                    await Promise.all(snapB.docs.map(d => deleteDoc(doc(db, "balancos", d.id))));
                     for (const item of tParaRestaurar) {
                         const nt = { ...item }; delete nt.id;
+                        if (nt.criadoEm?.seconds) nt.criadoEm = new Date(nt.criadoEm.seconds * 1000);
                         await addDoc(collection(db, "tarefas"), nt);
                     }
-                    alert("Sucesso!");
+                    for (const item of bParaRestaurar) {
+                        const nb = { ...item }; delete nb.id;
+                        if (nb.fechadoEm?.seconds) nb.fechadoEm = new Date(nb.fechadoEm.seconds * 1000);
+                        await addDoc(collection(db, "balancos"), nb);
+                    }
+                    alert("Backup restaurado com sucesso!");
+                    location.reload();
                 }
-            } catch (err) { alert("Erro!"); }
+            } catch (err) { alert("Erro ao processar o arquivo de backup."); }
         };
         reader.readAsText(file);
     };
