@@ -374,7 +374,6 @@
         }
     });
 
-    /* FUNÇÃO FECHAR MÊS: ATUALIZADA PARA USAR OS FILTROS DA ABA ADMIN */
     window.fecharMes = async () => {
         const senha = prompt("Digite a senha de administrador para CONGELAR o mês:");
         if (senha !== "1972") return alert("Senha incorreta!");
@@ -593,46 +592,55 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    /* FUNÇÃO ATUALIZAR ADMIN: CORRIGIDA PARA NÃO DOBRAR VALORES */
     window.atualizarAdmin = () => {
         const mesSel = document.getElementById('adminFiltroMes').value, anoSel = document.getElementById('adminFiltroAno').value;
         const cats = {}, meses = {}, anos = {}, mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
         let totalSelecionado = 0;
+        let totalGeralSomado = 0;
+        let totalAnoSomado = 0;
+
         tarefasGlobais.forEach(t => { 
             if(t.custo > 0 && t.concluida) { 
                 const [ano, mes] = t.dataLimite.split('-'); 
                 const kMes = `${mesesNomes[parseInt(mes)-1]}/${ano}`; 
+                
                 meses[kMes] = (meses[kMes] || 0) + t.custo;
-                anos[ano] = (anos[ano] || 0) + t.custo;
+                totalGeralSomado += t.custo;
+
+                if(ano === anoSel) {
+                    totalAnoSomado += t.custo;
+                    anos[ano] = (anos[ano] || 0) + t.custo;
+                }
+
                 if(mes === mesSel && ano === anoSel) {
                     totalSelecionado += t.custo;
                     cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
                 }
             } 
         });
-        balancosPermanentes.forEach(b => { 
-            const [m, a] = b.mesAno.split('/'); 
-            const k = `${mesesNomes[parseInt(m)-1]}/${a}`; 
-            meses[k] = (meses[k] || 0) + b.valor; 
-            anos[a] = (anos[a] || 0) + b.valor;
-            if(m === mesSel && a === anoSel) totalSelecionado += b.valor;
-        });
+
         const sortedB = [...balancosPermanentes].sort((a,b) => (b.fechadoEm?.seconds || 0) - (a.fechadoEm?.seconds || 0));
+        
         document.getElementById('labelMesSelecionado').innerText = `Total ${mesesNomes[parseInt(mesSel)-1].toUpperCase()} / ${anoSel}`;
         document.getElementById('lastClosedValue').innerText = `R$ ${(sortedB[0]?.valor || 0).toFixed(2)}`;
         document.getElementById('currentMonthActive').innerText = `R$ ${totalSelecionado.toFixed(2)}`;
         document.getElementById('totalTasks').innerText = tarefasGlobais.length;
-        document.getElementById('totalYearCost').innerText = `R$ ${(anos[anoSel] || 0).toFixed(2)}`;
-        document.getElementById('totalCost').innerText = `R$ ${Object.values(anos).reduce((a,b)=>a+b,0).toFixed(2)}`;
+        document.getElementById('totalYearCost').innerText = `R$ ${totalAnoSomado.toFixed(2)}`;
+        document.getElementById('totalCost').innerText = `R$ ${totalGeralSomado.toFixed(2)}`;
+
         const cCat = document.getElementById('listaCustosCategoria'); cCat.innerHTML = "";
         Object.keys(cats).sort().forEach(c => { 
             const d = document.createElement('div'); d.className = 'cat-cost-item'; 
             d.innerHTML = `<span>${c}</span><span class="cat-cost-value">R$ ${cats[c].toFixed(2)}</span>`; cCat.appendChild(d); 
         });
+
         const cMes = document.getElementById('listaCustosMensais'); cMes.innerHTML = "";
         Object.keys(meses).reverse().slice(0, 12).forEach(m => { 
             const d = document.createElement('div'); d.className = 'cat-cost-item'; 
             d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cMes.appendChild(d); 
         });
+
         atualizarGraficos(meses, cats, anos);
     }
 
