@@ -374,23 +374,39 @@
         }
     });
 
+    /* NOVA FUNÇÃO: CONGELAR SEM APAGAR TAREFAS */
     window.fecharMes = async () => {
         const senha = prompt("Digite a senha de administrador para CONGELAR o mês:");
         if (senha !== "1972") return alert("Senha incorreta!");
+        
         const agora = new Date();
         const mesAtual = String(agora.getMonth() + 1).padStart(2, '0');
         const anoAtual = agora.getFullYear();
         const chaveMesAno = `${mesAtual}/${anoAtual}`;
-        const totalMes = tarefasGlobais.filter(t => t.concluida && t.dataLimite.startsWith(`${anoAtual}-${mesAtual}`)).reduce((acc, t) => acc + (t.custo || 0), 0);
+
+        const tarefasMes = tarefasGlobais.filter(t => 
+            t.concluida && t.dataLimite.startsWith(`${anoAtual}-${mesAtual}`)
+        );
+        
+        const totalMes = tarefasMes.reduce((acc, t) => acc + (t.custo || 0), 0);
+        
         if (totalMes === 0) return alert("Não há gastos concluídos para fechar neste mês.");
-        if (confirm(`Fechar mês ${chaveMesAno} com total de R$ ${totalMes.toFixed(2)}?`)) {
+
+        const jaFechado = balancosPermanentes.find(b => b.mesAno === chaveMesAno);
+        if (jaFechado) {
+            if (!confirm(`Já existe um fechamento de R$ ${jaFechado.valor.toFixed(2)} para ${chaveMesAno}. Deseja atualizar com o novo valor de R$ ${totalMes.toFixed(2)}?`)) return;
+            await deleteDoc(doc(db, "balancos", jaFechado.id));
+        }
+
+        if (confirm(`Fechar mês ${chaveMesAno} com total de R$ ${totalMes.toFixed(2)}? AS TAREFAS SERÃO MANTIDAS NO HISTÓRICO.`)) {
             try {
-                await addDoc(collection(db, "balancos"), { mesAno: chaveMesAno, valor: totalMes, fechadoEm: new Date() });
-                const batch = writeBatch(db);
-                const paraRemover = tarefasGlobais.filter(t => t.concluida && t.dataLimite.startsWith(`${anoAtual}-${mesAtual}`));
-                paraRemover.forEach(t => batch.delete(doc(db, "tarefas", t.id)));
-                await batch.commit();
-                alert("Mês congelado com sucesso!");
+                await addDoc(collection(db, "balancos"), { 
+                    mesAno: chaveMesAno, 
+                    valor: totalMes, 
+                    fechadoEm: new Date() 
+                });
+                alert("Mês fechado e registrado no gráfico com sucesso! As tarefas continuam disponíveis no histórico.");
+                location.reload();
             } catch (e) { alert("Erro: " + e.message); }
         }
     };
@@ -430,18 +446,15 @@
         if (abaAtiva === 'cronograma') {
             const ordemRecorrencia = { "DIÁRIA": 1, "SEMANAL": 2, "MENSAL": 3 };
             filtradas = tarefasGlobais.filter(t => t.recorrencia && t.recorrencia !== "NENHUMA" && !t.concluida);
-            
             filtradas.sort((a, b) => {
                 if (a.dataLimite !== b.dataLimite) return a.dataLimite.localeCompare(b.dataLimite);
                 return (ordemRecorrencia[a.recorrencia] || 99) - (ordemRecorrencia[b.recorrencia] || 99);
             });
-
             const h = document.createElement('div'); h.className = 'lista-header'; h.innerText = `CRONOGRAMA RECORRENTE`; lista.appendChild(h);
         } else if (abaAtiva === 'historico') {
             const anoFiltro = document.getElementById('filtroAnoHist').value;
             const mesFiltro = document.getElementById('filtroMesHist').value;
             const catFiltro = document.getElementById('filtroCategoriaHist').value;
-            
             filtradas = tarefasGlobais.filter(t => {
                 const [ano, mes] = t.dataLimite.split('-');
                 const bateAno = ano === anoFiltro;
@@ -461,13 +474,11 @@
             const atrasada = t.dataLimite < hojeStr && !t.concluida;
             const [tAno, tMes] = t.dataLimite.split('-');
             const ehMesAtual = tMes === mesAtual && tAno === String(anoAtual);
-
             let classeExtra = "", rotuloAlerta = "";
             if (venceHoje) { classeExtra = "card-vence-hoje"; rotuloAlerta = '<span class="alert-icon-hoje">⚠️ VENCE HOJE</span>'; }
             else if (atrasada) { classeExtra = "card-atrasada"; rotuloAlerta = '<span class="alert-icon-atrasado">🚨 ATRASADA</span>'; }
             else if (abaAtiva === 'cronograma' && ehMesAtual) { classeExtra = "card-mes-atual"; }
             else if (t.descricao.includes('(') && !t.concluida) { classeExtra = "card-blink"; }
-
             div.style.setProperty('--blink-color', cor); div.className = `tarefa-card ${classeExtra}`;
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
                 <div class="info-area"><span class="cat-badge">${t.categoria}</span>
@@ -640,17 +651,14 @@
         chartA = new Chart(document.getElementById('chartAnual'), { type: 'bar', data: { labels: Object.keys(dA), datasets: [{ label: 'Ano', data: Object.values(dA), backgroundColor: '#a855f7', borderRadius: 8 }] } });
     }
 
-    /* MODIFICAÇÃO SOLICITADA: FUNÇÕES DE BACKUP COM NOME PERSONALIZADO E DATA */
     window.exportarBackup = () => { 
         const pack = { tarefas: tarefasGlobais, balancos: balancosPermanentes, exportadoEm: new Date() };
         const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pack, null, 2)); 
-        
         const d = new Date();
         const dia = String(d.getDate()).padStart(2, '0');
         const mes = String(d.getMonth() + 1).padStart(2, '0');
         const ano = d.getFullYear();
         const nomeArquivo = `Gestão familiar - ${dia}-${mes}-${ano}.json`;
-        
         const a = document.createElement('a'); 
         a.setAttribute("href", ds); 
         a.setAttribute("download", nomeArquivo); 
