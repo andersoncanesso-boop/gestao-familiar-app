@@ -10,6 +10,8 @@
     <meta name="apple-mobile-web-app-title" content="Gestão Familiar">
     <link rel="apple-touch-icon" href="https://i.imgur.com/8v9htgN.png">
     <link rel="icon" type="image/png" href="https://i.imgur.com/8v9htgN.png">
+    
+    <link rel="manifest" href="data:application/manifest+json,{'name':'Gestão Familiar','short_name':'Gestão','start_url':'.','display':'standalone','background_color':'#1e1b4b','theme_color':'#1e1b4b','icons':[{'src':'https://i.imgur.com/8v9htgN.png','sizes':'512x512','type':'image/png','purpose':'any maskable'}]}">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -599,6 +601,7 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    /* FUNÇÃO ATUALIZAR ADMIN: CORRIGIDA PARA NÃO DOBRAR VALORES */
     window.atualizarAdmin = () => {
         const mesSel = document.getElementById('adminFiltroMes').value, anoSel = document.getElementById('adminFiltroAno').value;
         const cats = {}, meses = {}, anos = {}, mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
