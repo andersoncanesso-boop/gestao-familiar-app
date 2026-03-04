@@ -374,23 +374,22 @@
         }
     });
 
-    /* NOVA FUNÇÃO: CONGELAR SEM APAGAR TAREFAS */
+    /* FUNÇÃO FECHAR MÊS: ATUALIZADA PARA USAR OS FILTROS DA ABA ADMIN */
     window.fecharMes = async () => {
         const senha = prompt("Digite a senha de administrador para CONGELAR o mês:");
         if (senha !== "1972") return alert("Senha incorreta!");
         
-        const agora = new Date();
-        const mesAtual = String(agora.getMonth() + 1).padStart(2, '0');
-        const anoAtual = agora.getFullYear();
-        const chaveMesAno = `${mesAtual}/${anoAtual}`;
+        const mesSel = document.getElementById('adminFiltroMes').value;
+        const anoSel = document.getElementById('adminFiltroAno').value;
+        const chaveMesAno = `${mesSel}/${anoSel}`;
 
         const tarefasMes = tarefasGlobais.filter(t => 
-            t.concluida && t.dataLimite.startsWith(`${anoAtual}-${mesAtual}`)
+            t.concluida && t.dataLimite.startsWith(`${anoSel}-${mesSel}`)
         );
         
         const totalMes = tarefasMes.reduce((acc, t) => acc + (t.custo || 0), 0);
         
-        if (totalMes === 0) return alert("Não há gastos concluídos para fechar neste mês.");
+        if (totalMes === 0) return alert(`Não há gastos concluídos para fechar em ${chaveMesAno}.`);
 
         const jaFechado = balancosPermanentes.find(b => b.mesAno === chaveMesAno);
         if (jaFechado) {
@@ -405,7 +404,7 @@
                     valor: totalMes, 
                     fechadoEm: new Date() 
                 });
-                alert("Mês fechado e registrado no gráfico com sucesso! As tarefas continuam disponíveis no histórico.");
+                alert(`Mês ${chaveMesAno} fechado e registrado com sucesso!`);
                 location.reload();
             } catch (e) { alert("Erro: " + e.message); }
         }
