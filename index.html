@@ -147,8 +147,8 @@
         <div class="nav-pills">
             <button class="nav-btn active" id="btnPlan" onclick="mudarAba('planejamento')">Planejamento</button>
             <button class="nav-btn" id="btnT" onclick="mudarAba('tarefas')">Tarefas</button>
-            <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Cronograma</button>
-            <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Itens</button>
+            <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Despesas</button>
+            <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Mercadorias</button>
             <button class="nav-btn" id="btnH" onclick="mudarAba('historico')">Histórico</button>
             <button class="nav-btn" id="btnA" onclick="mudarAba('admin')">Admin</button>
         </div>
@@ -420,7 +420,6 @@
         areaAdmin.classList.add('hidden'); areaForm.classList.add('hidden'); areaFiltroH.classList.add('hidden'); lista.classList.remove('hidden');
         if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
         
-        // CORREÇÃO: areaForm (Tela de Planejamento) só aparece na aba Planejamento
         if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
         
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
