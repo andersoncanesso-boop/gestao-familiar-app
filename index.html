@@ -176,6 +176,7 @@
                 <div style="display:flex; gap:8px;">
                     <select id="selectCategoria" style="flex:1.5;">
                         <option value="GERAL">📂 GERAL</option>
+                        <option value="💰 RECEITA">💰 RECEITA</option>
                         <option value="ALIMENTAÇÃO">🧑‍🍳 ALIMENTAÇÃO</option>
                         <option value="MERCADO">🛒 MERCADO</option>
                         <option value="CARRO">🚗 CARRO</option>
@@ -185,7 +186,7 @@
                         <option value="PET">🐾 PET</option>
                         <option value="MANUTENÇÃO">🛠️ MANUTENÇÃO</option>
                         <option value="SAÚDE">💊 SAÚDE</option>
-                        <option value="CONTAS">💰 CONTAS</option>
+                        <option value="CONTAS">💸 CONTAS</option>
                         <option value="LAZER">🎈 LAZER</option>
                         <option value="FÉRIAS">🌴 FÉRIAS</option>
                     </select>
@@ -230,6 +231,7 @@
                         <select id="filtroCategoriaHist" class="filter-select-hist" onchange="renderizar()">
                             <option value="TODAS">TODAS</option>
                             <option value="GERAL">📂 GERAL</option>
+                            <option value="💰 RECEITA">💰 RECEITA</option>
                             <option value="ALIMENTAÇÃO">🧑‍🍳 ALIMENTAÇÃO</option>
                             <option value="MERCADO">🛒 MERCADO</option>
                             <option value="CARRO">🚗 CARRO</option>
@@ -239,7 +241,7 @@
                             <option value="PET">🐾 PET</option>
                             <option value="MANUTENÇÃO">🛠️ MANUTENÇÃO</option>
                             <option value="SAÚDE">💊 SAÚDE</option>
-                            <option value="CONTAS">💰 CONTAS</option>
+                            <option value="CONTAS">💸 CONTAS</option>
                             <option value="LAZER">🎈 LAZER</option>
                             <option value="FÉRIAS">🌴 FÉRIAS</option>
                         </select>
@@ -273,19 +275,19 @@
                 
                 <div class="stat-row">
                     <div class="stat-box highlight">
-                        <span style="font-size: 0.7rem; font-weight: bold;">Último Mês Fechado</span>
+                        <span style="font-size: 0.7rem; font-weight: bold;">Saldo do Período</span>
                         <span class="stat-number" id="lastClosedValue">R$ 0,00</span>
                     </div>
                     <div class="stat-box">
-                        <span id="labelMesSelecionado" style="font-size: 0.7rem;">Mês Selecionado</span>
-                        <span class="stat-number" id="currentMonthActive">R$ 0,00</span>
+                        <span id="labelMesSelecionado" style="font-size: 0.7rem;">Gasto Selecionado</span>
+                        <span class="stat-number" id="currentMonthActive" style="color: var(--danger)">R$ 0,00</span>
                     </div>
                 </div>
 
                 <div class="stat-row">
-                    <div class="stat-box"><span>Tarefas</span><span class="stat-number" id="totalTasks">0</span></div>
+                    <div class="stat-box"><span>Itens</span><span class="stat-number" id="totalTasks">0</span></div>
+                    <div class="stat-box"><span>Total Receitas</span><span class="stat-number" id="totalReceitasAdmin" style="color: #22c55e">R$ 0,00</span></div>
                     <div class="stat-box"><span>Ano Selecionado</span><span class="stat-number" id="totalYearCost">R$ 0,00</span></div>
-                    <div class="stat-box"><span>Total Geral</span><span class="stat-number" id="totalCost">R$ 0,00</span></div>
                 </div>
 
                 <h4>📈 Evolução Mensal</h4>
@@ -329,7 +331,7 @@
 
     let tarefasGlobais = [], balancosPermanentes = [], abaAtiva = "planejamento", idEdicao = null;
     let chartM, chartC, chartA;
-    const coresBlink = { GERAL: '#f1f5f9', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
+    const coresBlink = { GERAL: '#f1f5f9', "💰 RECEITA": '#dcfce7', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
     const popularAnos = () => {
         const anoAtual = new Date().getFullYear();
@@ -391,24 +393,26 @@
             t.concluida && t.dataLimite.startsWith(`${anoSel}-${mesSel}`)
         );
         
-        const totalMes = tarefasMes.reduce((acc, t) => acc + (t.custo || 0), 0);
-        
-        if (totalMes === 0) return alert(`Não há gastos concluídos para fechar em ${chaveMesAno}.`);
+        const totalReceitas = tarefasMes.filter(t => t.categoria === "💰 RECEITA").reduce((acc, t) => acc + (t.custo || 0), 0);
+        const totalGastos = tarefasMes.filter(t => t.categoria !== "💰 RECEITA").reduce((acc, t) => acc + (t.custo || 0), 0);
+        const saldoFinal = totalReceitas - totalGastos;
+
+        if (tarefasMes.length === 0) return alert(`Não há dados para fechar em ${chaveMesAno}.`);
 
         const jaFechado = balancosPermanentes.find(b => b.mesAno === chaveMesAno);
         if (jaFechado) {
-            if (!confirm(`Já existe um fechamento de R$ ${jaFechado.valor.toFixed(2)} para ${chaveMesAno}. Deseja atualizar com o novo valor de R$ ${totalMes.toFixed(2)}?`)) return;
+            if (!confirm(`Já existe um fechamento de R$ ${jaFechado.valor.toFixed(2)} para ${chaveMesAno}. Deseja atualizar?`)) return;
             await deleteDoc(doc(db, "balancos", jaFechado.id));
         }
 
-        if (confirm(`Fechar mês ${chaveMesAno} com total de R$ ${totalMes.toFixed(2)}? AS TAREFAS SERÃO MANTIDAS NO HISTÓRICO.`)) {
+        if (confirm(`Fechar mês ${chaveMesAno} com saldo de R$ ${saldoFinal.toFixed(2)}?`)) {
             try {
                 await addDoc(collection(db, "balancos"), { 
                     mesAno: chaveMesAno, 
-                    valor: totalMes, 
+                    valor: saldoFinal, 
                     fechadoEm: new Date() 
                 });
-                alert(`Mês ${chaveMesAno} fechado e registrado com sucesso!`);
+                alert(`Mês ${chaveMesAno} fechado com sucesso!`);
                 location.reload();
             } catch (e) { alert("Erro: " + e.message); }
         }
@@ -434,7 +438,7 @@
                 const m = t.descricao.match(/\(([^)]+)\)/);
                 if (m) {
                     const h = document.createElement('div'); h.className = 'lista-header'; 
-                    h.innerHTML = `<span>LISTA: ${t.descricao.split('(')[0].trim()}</span>
+                    h.innerHTML = `<span>MERCADORIAS: ${t.descricao.split('(')[0].trim()}</span>
                                   <button class="btn-edit-lista" onclick="prepararEdicaoLista('${t.id}')">✏️ Editar Itens</button>`; 
                     lista.appendChild(h);
                     m[1].split(',').map(i => i.trim()).filter(i => i !== "").forEach((item, idx) => {
@@ -474,7 +478,7 @@
         }
 
         filtradas.forEach(t => {
-            const div = document.createElement('div'), cor = coresBlink[t.categoria] || '#ffffff';
+            const div = document.createElement('div'), cor = (t.categoria === "💰 RECEITA") ? "#22c55e" : (coresBlink[t.categoria] || '#ffffff');
             const venceHoje = t.dataLimite === hojeStr && !t.concluida;
             const atrasada = t.dataLimite < hojeStr && !t.concluida;
             const [tAno, tMes] = t.dataLimite.split('-');
@@ -486,11 +490,12 @@
             else if (t.descricao.includes('(') && !t.concluida) { classeExtra = "card-blink"; }
             
             div.style.setProperty('--blink-color', cor); div.className = `tarefa-card ${classeExtra}`;
+            div.style.borderLeftColor = cor;
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
-                <div class="info-area"><span class="cat-badge">${t.categoria}</span>
+                <div class="info-area"><span class="cat-badge" style="color:${cor}">${t.categoria}</span>
                 <span class="task-name">${t.descricao.split('(')[0]} ${rotuloAlerta}</span>
                 <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia ? `(${t.recorrencia})` : ''}</span>
-                ${t.custo > 0 ? `<span class="task-meta task-cost">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
+                ${t.custo > 0 ? `<span class="task-meta task-cost" style="color:${t.categoria === '💰 RECEITA' ? '#22c55e' : '#059669'}">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
                 <div class="action-btns"><button class="btn-icon" onclick="prepararEdicao('${t.id}')">✏️</button><button class="btn-icon" onclick="exterminar('${t.id}')">🗑️</button></div>`;
             lista.appendChild(div);
         });
@@ -560,7 +565,7 @@
                 const entradaData = prompt(`[AGENDAMENTO] Para quando é a PRÓXIMA?\nFormato: DD/MM/AAAA`, dataSugeridaBR);
                 if (entradaData === null) return;
                 const valorAtualBR = t.custo.toFixed(2).replace('.', ',');
-                const entradaValor = prompt(`[VALOR PAGO] Qual foi o valor real pago desta vez?`, valorAtualBR);
+                const entradaValor = prompt(`[VALOR PAGO/RECEBIDO] Qual foi o valor real desta vez?`, valorAtualBR);
                 if (entradaValor === null) return;
                 const partes = entradaData.split('/');
                 if (partes.length !== 3) return alert("Data inválida!");
@@ -603,38 +608,40 @@
     window.atualizarAdmin = () => {
         const mesSel = document.getElementById('adminFiltroMes').value, anoSel = document.getElementById('adminFiltroAno').value;
         const cats = {}, meses = {}, anos = {}, mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-        let totalSelecionado = 0;
-        let totalGeralSomado = 0;
-        let totalAnoSomado = 0;
+        let totalReceitasSel = 0;
+        let totalGastosSel = 0;
+        let totalGeralGastoSomado = 0;
+        let totalAnoGastoSomado = 0;
 
         tarefasGlobais.forEach(t => { 
             if(t.custo > 0 && t.concluida) { 
                 const [ano, mes] = t.dataLimite.split('-'); 
                 const kMes = `${mesesNomes[parseInt(mes)-1]}/${ano}`; 
                 
-                meses[kMes] = (meses[kMes] || 0) + t.custo;
-                totalGeralSomado += t.custo;
-
-                if(ano === anoSel) {
-                    totalAnoSomado += t.custo;
-                    anos[ano] = (anos[ano] || 0) + t.custo;
-                }
-
-                if(mes === mesSel && ano === anoSel) {
-                    totalSelecionado += t.custo;
-                    cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
+                if (t.categoria === "💰 RECEITA") {
+                    if(mes === mesSel && ano === anoSel) totalReceitasSel += t.custo;
+                } else {
+                    meses[kMes] = (meses[kMes] || 0) + t.custo;
+                    totalGeralGastoSomado += t.custo;
+                    if(ano === anoSel) totalAnoGastoSomado += t.custo;
+                    if(mes === mesSel && ano === anoSel) {
+                        totalGastosSel += t.custo;
+                        cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
+                    }
                 }
             } 
         });
 
-        const sortedB = [...balancosPermanentes].sort((a,b) => (b.fechadoEm?.seconds || 0) - (a.fechadoEm?.seconds || 0));
+        const saldoPeriodo = totalReceitasSel - totalGastosSel;
         
-        document.getElementById('labelMesSelecionado').innerText = `Total ${mesesNomes[parseInt(mesSel)-1].toUpperCase()} / ${anoSel}`;
-        document.getElementById('lastClosedValue').innerText = `R$ ${(sortedB[0]?.valor || 0).toFixed(2)}`;
-        document.getElementById('currentMonthActive').innerText = `R$ ${totalSelecionado.toFixed(2)}`;
+        document.getElementById('labelMesSelecionado').innerText = `Gasto ${mesesNomes[parseInt(mesSel)-1].toUpperCase()} / ${anoSel}`;
+        document.getElementById('lastClosedValue').innerText = `R$ ${saldoPeriodo.toFixed(2)}`;
+        document.getElementById('lastClosedValue').style.color = saldoPeriodo >= 0 ? "#22c55e" : "#ef4444";
+        document.getElementById('currentMonthActive').innerText = `R$ ${totalGastosSel.toFixed(2)}`;
+        document.getElementById('totalReceitasAdmin').innerText = `R$ ${totalReceitasSel.toFixed(2)}`;
         document.getElementById('totalTasks').innerText = tarefasGlobais.length;
-        document.getElementById('totalYearCost').innerText = `R$ ${totalAnoSomado.toFixed(2)}`;
-        document.getElementById('totalCost').innerText = `R$ ${totalGeralSomado.toFixed(2)}`;
+        document.getElementById('totalYearCost').innerText = `R$ ${totalAnoGastoSomado.toFixed(2)}`;
+        document.getElementById('totalCost').innerText = `R$ ${totalGeralGastoSomado.toFixed(2)}`;
 
         const cCat = document.getElementById('listaCustosCategoria'); cCat.innerHTML = "";
         Object.keys(cats).sort().forEach(c => { 
@@ -654,15 +661,15 @@
     function atualizarGraficos(dM, dC, dA) {
         if(chartM) chartM.destroy(); if(chartC) chartC.destroy(); if(chartA) chartA.destroy();
         const coresCategorias = {
-            "GERAL": "#6366f1", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARRO": "#f44336",
+            "GERAL": "#6366f1", "💰 RECEITA": "#22c55e", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARRO": "#f44336",
             "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63",
             "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3"
         };
         const labelsC = Object.keys(dC);
         const backgroundColorsC = labelsC.map(cat => coresCategorias[cat] || '#cbd5e1');
-        chartM = new Chart(document.getElementById('chartMensal'), { type: 'line', data: { labels: Object.keys(dM), datasets: [{ label: 'R$', data: Object.values(dM), borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] } });
+        chartM = new Chart(document.getElementById('chartMensal'), { type: 'line', data: { labels: Object.keys(dM), datasets: [{ label: 'Gasto R$', data: Object.values(dM), borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] } });
         chartC = new Chart(document.getElementById('chartCategoria'), { type: 'doughnut', data: { labels: labelsC, datasets: [{ data: Object.values(dC), backgroundColor: backgroundColorsC }] } });
-        chartA = new Chart(document.getElementById('chartAnual'), { type: 'bar', data: { labels: Object.keys(dA), datasets: [{ label: 'Ano', data: Object.values(dA), backgroundColor: '#a855f7', borderRadius: 8 }] } });
+        chartA = new Chart(document.getElementById('chartAnual'), { type: 'bar', data: { labels: Object.keys(dA), datasets: [{ label: 'Gasto Ano', data: Object.values(dA), backgroundColor: '#a855f7', borderRadius: 8 }] } });
     }
 
     window.exportarBackup = () => { 
