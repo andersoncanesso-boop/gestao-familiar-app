@@ -104,7 +104,7 @@
         .cat-cost-name { font-weight: 700; color: #475569; }
         .cat-cost-value { font-weight: 800; color: #059669; }
 
-        .chart-container { background: #f8fafc; padding: 15px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; position: relative; height: 250px; }
+        .chart-container { background: #f8fafc; padding: 15px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; position: relative; width: 100%; box-sizing: border-box; min-height: 250px; }
         .btn-lock { background: #1e1b4b; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 20px; width: 100%; font-size: 0.8rem; }
         .btn-print { background: #059669; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 20px; width: 100%; font-size: 0.8rem; }
 
@@ -330,7 +330,7 @@
     const provider = new GoogleAuthProvider();
 
     let tarefasGlobais = [], balancosPermanentes = [], abaAtiva = "planejamento", idEdicao = null;
-    let chartM, chartC, chartA;
+    let chartM = null, chartC = null, chartA = null;
     const coresBlink = { GERAL: '#f1f5f9', "💰 RECEITA": '#dcfce7', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
     const popularAnos = () => {
@@ -373,7 +373,6 @@
             onSnapshot(query(collection(db, "tarefas"), orderBy("criadoEm", "desc")), snap => {
                 tarefasGlobais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderizar();
-                if(abaAtiva === 'admin') window.atualizarAdmin();
             });
             onSnapshot(collection(db, "balancos"), snap => {
                 balancosPermanentes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -422,7 +421,12 @@
         const lista = document.getElementById('listaPrincipal'), areaForm = document.getElementById('areaForm'), areaAdmin = document.getElementById('areaAdmin'), areaFiltroH = document.getElementById('areaFiltroHistorico');
         lista.innerHTML = "";
         areaAdmin.classList.add('hidden'); areaForm.classList.add('hidden'); areaFiltroH.classList.add('hidden'); lista.classList.remove('hidden');
-        if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
+        if (abaAtiva === 'admin') { 
+            areaAdmin.classList.remove('hidden'); 
+            lista.classList.add('hidden'); 
+            setTimeout(() => window.atualizarAdmin(), 100); 
+            return; 
+        }
         
         if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
@@ -564,7 +568,7 @@
                 const dataSugeridaBR = `${diaSug}/${mesSug}/${anoSug}`;
                 const entradaData = prompt(`[AGENDAMENTO] Para quando é a PRÓXIMA?\nFormato: DD/MM/AAAA`, dataSugeridaBR);
                 if (entradaData === null) return;
-                const valorAtualBR = t.custo.toFixed(2).replace('.', ',');
+                const valorAtualBR = (t.custo || 0).toFixed(2).replace('.', ',');
                 const entradaValor = prompt(`[VALOR PAGO/RECEBIDO] Qual foi o valor real desta vez?`, valorAtualBR);
                 if (entradaValor === null) return;
                 const partes = entradaData.split('/');
@@ -616,7 +620,9 @@
 
         tarefasGlobais.forEach(t => { 
             if(t.custo > 0 && t.concluida && t.dataLimite) { 
-                const [ano, mes] = t.dataLimite.split('-'); 
+                const parts = t.dataLimite.split('-');
+                const ano = parts[0];
+                const mes = parts[1];
                 const kMes = `${mesesNomes[parseInt(mes)-1]}/${ano}`; 
                 
                 if (t.categoria === "💰 RECEITA") {
@@ -670,36 +676,33 @@
 
     function atualizarGraficos(dM, dC, dA) {
         if(chartM) chartM.destroy(); if(chartC) chartC.destroy(); if(chartA) chartA.destroy();
-        const coresCategorias = {
-            "GERAL": "#6366f1", "💰 RECEITA": "#22c55e", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARRO": "#f44336",
-            "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63",
-            "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3"
-        };
+        
         const mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+        const coresCategorias = { "GERAL": "#6366f1", "💰 RECEITA": "#22c55e", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARRO": "#f44336", "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63", "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3" };
+
         const labelsM = Object.keys(dM).sort((a,b) => {
             const [mA, aA] = a.split('/'); const [mB, aB] = b.split('/');
             return (aA + (mesesNomes.indexOf(mA)+10)).localeCompare(aB + (mesesNomes.indexOf(mB)+10));
         });
-        const valuesM = labelsM.map(l => dM[l]);
 
         chartM = new Chart(document.getElementById('chartMensal'), { 
             type: 'line', 
-            data: { labels: labelsM.length ? labelsM : ["--"], datasets: [{ label: 'Gasto R$', data: valuesM.length ? valuesM : [0], borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] },
-            options: { maintainAspectRatio: false, responsive: true }
+            data: { labels: labelsM.length ? labelsM : ["--"], datasets: [{ label: 'R$', data: labelsM.map(l => dM[l]), borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
 
         const labelsC = Object.keys(dC);
         chartC = new Chart(document.getElementById('chartCategoria'), { 
             type: 'doughnut', 
-            data: { labels: labelsC.length ? labelsC : ["Sem dados"], datasets: [{ data: labelsC.length ? Object.values(dC) : [1], backgroundColor: labelsC.length ? labelsC.map(c => coresCategorias[c] || '#eee') : ['#eee'] }] },
-            options: { maintainAspectRatio: false, responsive: true }
+            data: { labels: labelsC.length ? labelsC : ["Sem dados"], datasets: [{ data: labelsC.length ? Object.values(dC) : [1], backgroundColor: labelsC.map(c => coresCategorias[c] || '#eee') }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
 
         const labelsA = Object.keys(dA).sort();
         chartA = new Chart(document.getElementById('chartAnual'), { 
             type: 'bar', 
-            data: { labels: labelsA.length ? labelsA : ["--"], datasets: [{ label: 'Gasto Ano', data: labelsA.length ? labelsA.map(l => dA[l]) : [0], backgroundColor: '#a855f7', borderRadius: 8 }] },
-            options: { maintainAspectRatio: false, responsive: true }
+            data: { labels: labelsA.length ? labelsA : ["--"], datasets: [{ label: 'R$', data: labelsA.map(l => dA[l]), backgroundColor: '#a855f7', borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
