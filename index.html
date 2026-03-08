@@ -334,12 +334,13 @@
     const coresBlink = { GERAL: '#f1f5f9', "💰 RECEITA": '#dcfce7', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
     const popularAnos = () => {
-        const anoAtual = new Date().getFullYear();
+        const agora = new Date();
+        const anoAtual = agora.getFullYear();
         const selects = [document.getElementById('filtroAnoHist'), document.getElementById('adminFiltroAno')];
         selects.forEach(sel => {
             if (!sel) return;
             sel.innerHTML = "";
-            // Mudança para 2025 para captar dados do início deste ano ou do ano passado
+            // Garante que 2025 e 2026 estejam no seletor
             for (let i = 2025; i <= anoAtual + 5; i++) {
                 const opt = document.createElement('option');
                 opt.value = i; opt.innerText = i;
@@ -391,7 +392,7 @@
         const chaveMesAno = `${mesSel}/${anoSel}`;
 
         const tarefasMes = tarefasGlobais.filter(t => 
-            t.concluida && t.dataLimite.startsWith(`${anoSel}-${mesSel}`)
+            t.concluida && t.dataLimite && t.dataLimite.startsWith(`${anoSel}-${mesSel}`)
         );
         
         const totalReceitas = tarefasMes.filter(t => t.categoria === "💰 RECEITA").reduce((acc, t) => acc + (t.custo || 0), 0);
@@ -426,8 +427,8 @@
         if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
         
         if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
-        
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
+
         const hoje = new Date();
         const hojeStr = hoje.toLocaleDateString('sv-SE');
         const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -465,6 +466,7 @@
             const mesFiltro = document.getElementById('filtroMesHist').value;
             const catFiltro = document.getElementById('filtroCategoriaHist').value;
             filtradas = tarefasGlobais.filter(t => {
+                if (!t.dataLimite) return false;
                 const [ano, mes] = t.dataLimite.split('-');
                 const bateAno = ano === anoFiltro;
                 const bateMes = mesFiltro === "TODOS" || mes === mesFiltro;
@@ -475,27 +477,27 @@
         }
 
         if (abaAtiva !== 'historico') {
-             filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
+             filtradas.sort((a, b) => (a.dataLimite || "").localeCompare(b.dataLimite || ""));
         }
 
         filtradas.forEach(t => {
-            const div = document.createElement('div'), cor = (t.categoria === "💰 RECEITA") ? "#22c55e" : (coresBlink[t.categoria] || '#ffffff');
+            const cor = (t.categoria === "💰 RECEITA") ? "#22c55e" : (coresBlink[t.categoria] || '#ffffff');
             const venceHoje = t.dataLimite === hojeStr && !t.concluida;
             const atrasada = t.dataLimite < hojeStr && !t.concluida;
-            const [tAno, tMes] = t.dataLimite.split('-');
+            const [tAno, tMes] = (t.dataLimite || "0000-00").split('-');
             const ehMesAtual = tMes === mesAtual && tAno === String(anoAtual);
             let classeExtra = "", rotuloAlerta = "";
             if (venceHoje) { classeExtra = "card-vence-hoje"; rotuloAlerta = '<span class="alert-icon-hoje">⚠️ VENCE HOJE</span>'; }
             else if (atrasada) { classeExtra = "card-atrasada"; rotuloAlerta = '<span class="alert-icon-atrasado">🚨 ATRASADA</span>'; }
             else if ((abaAtiva === 'cronograma' || abaAtiva === 'tarefas') && ehMesAtual) { classeExtra = "card-mes-atual"; }
-            else if (t.descricao.includes('(') && !t.concluida) { classeExtra = "card-blink"; }
             
+            const div = document.createElement('div');
             div.style.setProperty('--blink-color', cor); div.className = `tarefa-card ${classeExtra}`;
             div.style.borderLeftColor = cor;
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
                 <div class="info-area"><span class="cat-badge" style="color:${cor}">${t.categoria}</span>
                 <span class="task-name">${t.descricao.split('(')[0]} ${rotuloAlerta}</span>
-                <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia ? `(${t.recorrencia})` : ''}</span>
+                <span class="task-meta">📅 ${(t.dataLimite || "--/--/--").split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia ? `(${t.recorrencia})` : ''}</span>
                 ${t.custo > 0 ? `<span class="task-meta task-cost" style="color:${t.categoria === '💰 RECEITA' ? '#22c55e' : '#059669'}">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
                 <div class="action-btns"><button class="btn-icon" onclick="prepararEdicao('${t.id}')">✏️</button><button class="btn-icon" onclick="exterminar('${t.id}')">🗑️</button></div>`;
             lista.appendChild(div);
@@ -596,7 +598,7 @@
         mudarAba('planejamento');
         document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
         const inputC = document.getElementById('inputCusto');
-        inputC.value = t.custo.toFixed(2).replace(".", ",");
+        inputC.value = (t.custo || 0).toFixed(2).replace(".", ",");
         mascaraDinheiro(inputC);
         document.getElementById('inputData').value = t.dataLimite;
         document.getElementById('inputHora').value = t.hora || "";
@@ -623,7 +625,6 @@
                 if (t.categoria === "💰 RECEITA") {
                     if(mes === mesSel && ano === anoSel) totalReceitasSel += t.custo;
                 } else {
-                    // Soma como Despesa (ou categoria antiga)
                     meses[kMes] = (meses[kMes] || 0) + t.custo;
                     totalGeralGastoSomado += t.custo;
 
@@ -658,7 +659,16 @@
         });
 
         const cMes = document.getElementById('listaCustosMensais'); cMes.innerHTML = "";
-        Object.keys(meses).reverse().slice(0, 12).forEach(m => { 
+        // Ordena chaves de meses para garantir ordem cronológica no histórico (últimos 12 meses)
+        const sortedMesesKeys = Object.keys(meses).sort((a,b) => {
+            const [mA, aA] = a.split('/');
+            const [mB, aB] = b.split('/');
+            const idxA = mesesNomes.indexOf(mA);
+            const idxB = mesesNomes.indexOf(mB);
+            return (aA + (idxA + 10).toString()).localeCompare(aB + (idxB + 10).toString());
+        }).reverse().slice(0, 12);
+
+        sortedMesesKeys.forEach(m => { 
             const d = document.createElement('div'); d.className = 'cat-cost-item'; 
             d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cMes.appendChild(d); 
         });
@@ -676,11 +686,19 @@
         const labelsC = Object.keys(dC);
         const backgroundColorsC = labelsC.map(cat => coresCategorias[cat] || '#cbd5e1');
         
+        // Ordenação dos meses para o gráfico de linha
+        const mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+        const labelsM = Object.keys(dM).sort((a,b) => {
+            const [mA, aA] = a.split('/'); const [mB, aB] = b.split('/');
+            return (aA + (mesesNomes.indexOf(mA)+10)).localeCompare(aB + (mesesNomes.indexOf(mB)+10));
+        });
+        const valuesM = labelsM.map(l => dM[l]);
+
         chartM = new Chart(document.getElementById('chartMensal'), { 
             type: 'line', 
             data: { 
-                labels: Object.keys(dM).length ? Object.keys(dM) : ["--"], 
-                datasets: [{ label: 'Gasto R$', data: Object.values(dM).length ? Object.values(dM) : [0], borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] 
+                labels: labelsM.length ? labelsM : ["--"], 
+                datasets: [{ label: 'Gasto R$', data: valuesM.length ? valuesM : [0], borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] 
             } 
         });
 
