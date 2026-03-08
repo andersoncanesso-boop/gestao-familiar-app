@@ -489,10 +489,12 @@
             else if (t.descricao.includes('(') && !t.concluida) { classeExtra = "card-blink"; }
             
             div.style.setProperty('--blink-color', cor); div.className = `tarefa-card ${classeExtra}`;
+            
+            // CORREÇÃO: Passamos explicitamente o ID para as funções de botão
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
                 <div class="info-area"><span class="cat-badge">${t.categoria}</span>
                 <span class="task-name">${t.descricao.split('(')[0]} ${rotuloAlerta}</span>
-                <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} ${t.hora || '--:--'} ${t.recorrencia && t.recorrencia !== 'NENHUMA' ? `(${t.recorrencia})` : ''}</span>
+                <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia && t.recorrencia !== 'NENHUMA' ? `(${t.recorrencia})` : ''}</span>
                 ${t.custo > 0 ? `<span class="task-meta task-cost">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
                 <div class="action-btns">
                     <button class="btn-icon" onclick="prepararEdicao('${t.id}')">✏️</button>
@@ -570,7 +572,6 @@
         if (!t) return;
         
         if (!t.recorrencia || t.recorrencia === "NENHUMA") {
-            // Se for do histórico e você clicar, ele volta para pendente.
             await updateDoc(doc(db, "tarefas", id), { concluida: !statusAtual });
         } else {
             if (!statusAtual) {
@@ -595,9 +596,15 @@
         }
     };
 
+    // CORREÇÃO: Função de exclusão garantindo o ID correto
     window.exterminar = async (id) => { 
-        if(confirm("Deseja deletar este item?")) {
-            await deleteDoc(doc(db, "tarefas", id)); 
+        if(!id) return alert("Erro: ID da tarefa não encontrado.");
+        if(confirm("Deseja deletar permanentemente este item?")) {
+            try {
+                await deleteDoc(doc(db, "tarefas", id));
+            } catch (e) {
+                alert("Erro ao deletar: " + e.message);
+            }
         }
     };
     
@@ -650,7 +657,6 @@
         });
         
         const sortedB = [...balancosPermanentes].sort((a,b) => (b.fechadoEm?.seconds || 0) - (a.fechadoEm?.seconds || 0));
-        document.getElementById('labelMesSelecionado').innerText = `Total ${mesesNomes[parseInt(mesSel)-1].toUpperCase()} / ${anoSel}`;
         document.getElementById('lastClosedValue').innerText = `R$ ${(sortedB[0]?.valor || 0).toFixed(2)}`;
         document.getElementById('currentMonthActive').innerText = `R$ ${totalSel.toFixed(2)}`;
         document.getElementById('totalTasks').innerText = tarefasGlobais.length;
@@ -740,7 +746,7 @@
                     alert("Backup restaurado com sucesso!");
                     location.reload();
                 }
-            } catch (err) { alert("Erro no backup."); }
+            } catch (err) { alert("Erro ao processar o arquivo de backup."); }
         };
         reader.readAsText(file);
     };
