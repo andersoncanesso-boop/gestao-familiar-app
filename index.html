@@ -145,7 +145,8 @@
     </div>
     <div class="nav-right">
         <div class="nav-pills">
-            <button class="nav-btn active" id="btnT" onclick="mudarAba('tarefas')">Tarefas</button>
+            <button class="nav-btn active" id="btnPlan" onclick="mudarAba('planejamento')">Planejamento</button>
+            <button class="nav-btn" id="btnT" onclick="mudarAba('tarefas')">Tarefas</button>
             <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Cronograma</button>
             <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Itens</button>
             <button class="nav-btn" id="btnH" onclick="mudarAba('historico')">Histórico</button>
@@ -168,11 +169,6 @@
     </div>
 
     <div id="telaApp" class="hidden">
-        <div class="logo-area" style="display:none;">
-            <img class="logo-img" src="https://i.imgur.com/8v9htgN.png" alt="Logo">
-            <div class="logo-text">Relatório de Gestão Familiar</div>
-        </div>
-
         <div id="areaForm">
             <div class="form-card">
                 <input type="text" id="inputTarefa" placeholder="Descrição (Ex: Mercado)">
@@ -331,7 +327,7 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    let tarefasGlobais = [], balancosPermanentes = [], abaAtiva = "tarefas", idEdicao = null;
+    let tarefasGlobais = [], balancosPermanentes = [], abaAtiva = "planejamento", idEdicao = null;
     let chartM, chartC, chartA;
     const coresBlink = { GERAL: '#f1f5f9', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
@@ -423,7 +419,7 @@
         lista.innerHTML = "";
         areaAdmin.classList.add('hidden'); areaForm.classList.add('hidden'); areaFiltroH.classList.add('hidden'); lista.classList.remove('hidden');
         if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
-        if (abaAtiva === 'tarefas') areaForm.classList.remove('hidden');
+        if (abaAtiva === 'planejamento' || abaAtiva === 'tarefas') areaForm.classList.remove('hidden');
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
         const hoje = new Date();
         const hojeStr = hoje.toLocaleDateString('sv-SE');
@@ -450,14 +446,16 @@
             });
             return;
         } 
-        if (abaAtiva === 'cronograma') {
-            const ordemRecorrencia = { "DIÁRIA": 1, "SEMANAL": 2, "MENSAL": 3 };
-            filtradas = tarefasGlobais.filter(t => t.recorrencia && t.recorrencia !== "NENHUMA" && !t.concluida);
-            filtradas.sort((a, b) => {
-                if (a.dataLimite !== b.dataLimite) return a.dataLimite.localeCompare(b.dataLimite);
-                return (ordemRecorrencia[a.recorrencia] || 99) - (ordemRecorrencia[b.recorrencia] || 99);
-            });
-            const h = document.createElement('div'); h.className = 'lista-header'; h.innerText = `CRONOGRAMA RECORRENTE`; lista.appendChild(h);
+        
+        if (abaAtiva === 'planejamento') {
+            // SOMENTE TAREFAS NÃO RECORRENTES (ÚNICAS)
+            filtradas = tarefasGlobais.filter(t => !t.concluida && (!t.recorrencia || t.recorrencia === "NENHUMA"));
+        } else if (abaAtiva === 'tarefas') {
+            // RECORRENTES SEM CUSTO
+            filtradas = tarefasGlobais.filter(t => !t.concluida && t.recorrencia && t.recorrencia !== "NENHUMA" && (t.custo === 0 || !t.custo));
+        } else if (abaAtiva === 'cronograma') {
+            // RECORRENTES COM CUSTO
+            filtradas = tarefasGlobais.filter(t => !t.concluida && t.recorrencia && t.recorrencia !== "NENHUMA" && t.custo > 0);
         } else if (abaAtiva === 'historico') {
             const anoFiltro = document.getElementById('filtroAnoHist').value;
             const mesFiltro = document.getElementById('filtroMesHist').value;
@@ -470,9 +468,10 @@
                 return t.concluida && bateAno && bateMes && bateCat;
             });
             filtradas.sort((a, b) => b.dataLimite.localeCompare(a.dataLimite));
-        } else {
-            filtradas = tarefasGlobais.filter(t => !t.concluida && (!t.recorrencia || t.recorrencia === "NENHUMA"));
-            filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
+        }
+
+        if (abaAtiva !== 'historico') {
+             filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
         }
 
         filtradas.forEach(t => {
@@ -484,8 +483,9 @@
             let classeExtra = "", rotuloAlerta = "";
             if (venceHoje) { classeExtra = "card-vence-hoje"; rotuloAlerta = '<span class="alert-icon-hoje">⚠️ VENCE HOJE</span>'; }
             else if (atrasada) { classeExtra = "card-atrasada"; rotuloAlerta = '<span class="alert-icon-atrasado">🚨 ATRASADA</span>'; }
-            else if (abaAtiva === 'cronograma' && ehMesAtual) { classeExtra = "card-mes-atual"; }
+            else if ((abaAtiva === 'cronograma' || abaAtiva === 'tarefas') && ehMesAtual) { classeExtra = "card-mes-atual"; }
             else if (t.descricao.includes('(') && !t.concluida) { classeExtra = "card-blink"; }
+            
             div.style.setProperty('--blink-color', cor); div.className = `tarefa-card ${classeExtra}`;
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
                 <div class="info-area"><span class="cat-badge">${t.categoria}</span>
@@ -502,7 +502,7 @@
         const m = t.descricao.match(/\(([^)]+)\)/);
         if(m) {
             idEdicao = id;
-            mudarAba('tarefas');
+            mudarAba('planejamento');
             document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
             document.getElementById('inputSubItens').value = m[1];
             document.getElementById('selectCategoria').value = t.categoria;
@@ -539,7 +539,7 @@
 
     window.mudarAba = (aba) => {
         abaAtiva = aba; document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        const btns = { tarefas: 'btnT', cronograma: 'btnC', itens: 'btnI', historico: 'btnH', admin: 'btnA' };
+        const btns = { planejamento: 'btnPlan', tarefas: 'btnT', cronograma: 'btnC', itens: 'btnI', historico: 'btnH', admin: 'btnA' };
         document.getElementById(btns[aba]).classList.add('active'); renderizar();
     };
 
@@ -588,7 +588,7 @@
 
     window.prepararEdicao = (id) => {
         const t = tarefasGlobais.find(x => x.id === id); idEdicao = id;
-        mudarAba('tarefas');
+        mudarAba('planejamento');
         document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
         const inputC = document.getElementById('inputCusto');
         inputC.value = t.custo.toFixed(2).replace(".", ",");
