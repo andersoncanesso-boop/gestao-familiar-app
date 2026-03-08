@@ -198,7 +198,7 @@
                 </div>
                 <div style="display:flex; gap:8px;">
                     <input type="text" id="inputCusto" placeholder="R$ 0,00" style="flex:1.5;" oninput="mascaraDinheiro(this)">
-                    <input type="number" id="inputParcelas" placeholder="Parcelas (Ex: 12)" style="flex:1;" min="1" max="60">
+                    <input type="number" id="inputParcelas" placeholder="Parcelas (Ex: 10)" style="flex:1;" min="1" max="60">
                 </div>
                 <div style="display:flex; gap:8px;">
                     <input type="date" id="inputData" style="flex:1.5;">
@@ -425,12 +425,14 @@
         
         if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
+
         const hoje = new Date();
         const hojeStr = hoje.toLocaleDateString('sv-SE');
         const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
         const anoAtual = hoje.getFullYear();
 
         let filtradas = [];
+        
         if (abaAtiva === 'itens') {
             tarefasGlobais.filter(t => !t.concluida).forEach(t => {
                 const m = t.descricao.match(/\(([^)]+)\)/);
@@ -463,15 +465,13 @@
             const catFiltro = document.getElementById('filtroCategoriaHist').value;
             filtradas = tarefasGlobais.filter(t => {
                 const [ano, mes] = t.dataLimite.split('-');
-                const bateAno = ano === anoFiltro;
-                const bateMes = mesFiltro === "TODOS" || mes === mesFiltro;
-                const bateCat = catFiltro === "TODAS" || t.categoria === catFiltro;
-                return t.concluida && bateAno && bateMes && bateCat;
+                return t.concluida && (ano === anoFiltro) && (mesFiltro === "TODOS" || mes === mesFiltro) && (catFiltro === "TODAS" || t.categoria === catFiltro);
             });
-            filtradas.sort((a, b) => b.dataLimite.localeCompare(a.dataLimite));
         }
 
-        if (abaAtiva !== 'historico') {
+        if (abaAtiva === 'historico') {
+            filtradas.sort((a, b) => b.dataLimite.localeCompare(a.dataLimite));
+        } else {
              filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
         }
 
@@ -481,6 +481,7 @@
             const atrasada = t.dataLimite < hojeStr && !t.concluida;
             const [tAno, tMes] = t.dataLimite.split('-');
             const ehMesAtual = tMes === mesAtual && tAno === String(anoAtual);
+            
             let classeExtra = "", rotuloAlerta = "";
             if (venceHoje) { classeExtra = "card-vence-hoje"; rotuloAlerta = '<span class="alert-icon-hoje">⚠️ VENCE HOJE</span>'; }
             else if (atrasada) { classeExtra = "card-atrasada"; rotuloAlerta = '<span class="alert-icon-atrasado">🚨 ATRASADA</span>'; }
@@ -491,9 +492,12 @@
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
                 <div class="info-area"><span class="cat-badge">${t.categoria}</span>
                 <span class="task-name">${t.descricao.split('(')[0]} ${rotuloAlerta}</span>
-                <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia ? `(${t.recorrencia})` : ''}</span>
+                <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia && t.recorrencia !== 'NENHUMA' ? `(${t.recorrencia})` : ''}</span>
                 ${t.custo > 0 ? `<span class="task-meta task-cost">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
-                <div class="action-btns"><button class="btn-icon" onclick="prepararEdicao('${t.id}')">✏️</button><button class="btn-icon" onclick="exterminar('${t.id}')">🗑️</button></div>`;
+                <div class="action-btns">
+                    <button class="btn-icon" onclick="prepararEdicao('${t.id}')">✏️</button>
+                    <button class="btn-icon" onclick="exterminar('${t.id}')">🗑️</button>
+                </div>`;
             lista.appendChild(div);
         });
     };
@@ -514,7 +518,8 @@
     };
 
     window.btnSalvarClick = async () => {
-        const descBase = document.getElementById('inputTarefa').value.trim(), subItensRaw = document.getElementById('inputSubItens').value.trim();
+        const descBase = document.getElementById('inputTarefa').value.trim();
+        const subItensRaw = document.getElementById('inputSubItens').value.trim();
         let custoStr = document.getElementById('inputCusto').value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
         const custo = parseFloat(custoStr) || 0;
         const dataInput = document.getElementById('inputData').value;
@@ -529,22 +534,14 @@
         if (subItensRaw !== "") descFinal += ` (${subItensRaw})`;
 
         if (idEdicao) {
-            // Lógica de Atualização
             const dados = { 
-                descricao: descFinal, 
-                custo, 
-                dataLimite: dataInput, 
-                hora, 
-                categoria: cat, 
-                recorrencia: rec, 
-                concluida: false, 
-                criadoEm: new Date() 
+                descricao: descFinal, custo, dataLimite: dataInput, hora, categoria: cat, recorrencia: rec, concluida: false, criadoEm: new Date() 
             };
             await updateDoc(doc(db, "tarefas", idEdicao), dados);
             idEdicao = null; 
             document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
         } else {
-            // Lógica de Inserção com Parcelas
+            // Lógica de Parcelas
             for (let i = 0; i < parcelas; i++) {
                 let dataParcela = new Date(dataInput + 'T12:00:00');
                 dataParcela.setMonth(dataParcela.getMonth() + i);
@@ -553,20 +550,11 @@
                 const descFmt = parcelas > 1 ? `${descFinal} (${i + 1}/${parcelas})` : descFinal;
                 
                 await addDoc(collection(db, "tarefas"), { 
-                    descricao: descFmt, 
-                    custo, 
-                    dataLimite: dataFmt, 
-                    hora, 
-                    categoria: cat, 
-                    recorrencia: rec, 
-                    concluida: false, 
-                    criadoEm: new Date(),
-                    statusItens: {} 
+                    descricao: descFmt, custo, dataLimite: dataFmt, hora, categoria: cat, recorrencia: rec, concluida: false, criadoEm: new Date(), statusItens: {} 
                 });
             }
         }
         
-        // Limpar Campos
         document.getElementById('inputTarefa').value = ""; 
         document.getElementById('inputSubItens').value = ""; 
         document.getElementById('inputCusto').value = "";
@@ -613,7 +601,11 @@
         }
     };
 
-    window.exterminar = async (id) => { if(confirm("Deletar?")) await deleteDoc(doc(db, "tarefas", id)); };
+    window.exterminar = async (id) => { 
+        if(confirm("Tem certeza que deseja deletar este item?")) {
+            await deleteDoc(doc(db, "tarefas", id)); 
+        }
+    };
     
     window.toggleSubItem = async (id, idx, st) => { 
         const t = tarefasGlobais.find(x => x.id === id); 
@@ -736,7 +728,7 @@
         reader.onload = async (e) => {
             try {
                 const dados = JSON.parse(e.target.result);
-                if (confirm(`Restaurar backup?`)) {
+                if (confirm(`Deseja restaurar o backup de "${file.name}"? Isso substituirá os dados atuais.`)) {
                     const snapT = await getDocs(collection(db, "tarefas")); 
                     await Promise.all(snapT.docs.map(d => deleteDoc(doc(db, "tarefas", d.id))));
                     const snapB = await getDocs(collection(db, "balancos")); 
@@ -751,9 +743,10 @@
                         if (nb.fechadoEm?.seconds) nb.fechadoEm = new Date(nb.fechadoEm.seconds * 1000); 
                         await addDoc(collection(db, "balancos"), nb); 
                     }
+                    alert("Backup restaurado com sucesso!");
                     location.reload();
                 }
-            } catch (err) { alert("Erro no backup."); }
+            } catch (err) { alert("Erro ao processar o arquivo de backup."); }
         };
         reader.readAsText(file);
     };
