@@ -419,7 +419,10 @@
         lista.innerHTML = "";
         areaAdmin.classList.add('hidden'); areaForm.classList.add('hidden'); areaFiltroH.classList.add('hidden'); lista.classList.remove('hidden');
         if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
-        if (abaAtiva === 'planejamento' || abaAtiva === 'tarefas') areaForm.classList.remove('hidden');
+        
+        // MODIFICAÇÃO: areaForm (Tela de Planejamento) só aparece na aba Planejamento
+        if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
+        
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
         const hoje = new Date();
         const hojeStr = hoje.toLocaleDateString('sv-SE');
@@ -448,13 +451,10 @@
         } 
         
         if (abaAtiva === 'planejamento') {
-            // SOMENTE TAREFAS NÃO RECORRENTES (ÚNICAS)
             filtradas = tarefasGlobais.filter(t => !t.concluida && (!t.recorrencia || t.recorrencia === "NENHUMA"));
         } else if (abaAtiva === 'tarefas') {
-            // RECORRENTES SEM CUSTO
             filtradas = tarefasGlobais.filter(t => !t.concluida && t.recorrencia && t.recorrencia !== "NENHUMA" && (t.custo === 0 || !t.custo));
         } else if (abaAtiva === 'cronograma') {
-            // RECORRENTES COM CUSTO
             filtradas = tarefasGlobais.filter(t => !t.concluida && t.recorrencia && t.recorrencia !== "NENHUMA" && t.custo > 0);
         } else if (abaAtiva === 'historico') {
             const anoFiltro = document.getElementById('filtroAnoHist').value;
