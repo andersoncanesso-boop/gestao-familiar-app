@@ -420,7 +420,7 @@
         areaAdmin.classList.add('hidden'); areaForm.classList.add('hidden'); areaFiltroH.classList.add('hidden'); lista.classList.remove('hidden');
         if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
         
-        // MODIFICAÇÃO: areaForm (Tela de Planejamento) só aparece na aba Planejamento
+        // CORREÇÃO: areaForm (Tela de Planejamento) só aparece na aba Planejamento
         if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
         
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
