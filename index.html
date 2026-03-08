@@ -104,7 +104,7 @@
         .cat-cost-name { font-weight: 700; color: #475569; }
         .cat-cost-value { font-weight: 800; color: #059669; }
 
-        .chart-container { background: #f8fafc; padding: 15px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; position: relative; width: 100%; box-sizing: border-box; min-height: 250px; }
+        .chart-container { background: #f8fafc; padding: 15px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
         .btn-lock { background: #1e1b4b; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 20px; width: 100%; font-size: 0.8rem; }
         .btn-print { background: #059669; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 20px; width: 100%; font-size: 0.8rem; }
 
@@ -176,7 +176,6 @@
                 <div style="display:flex; gap:8px;">
                     <select id="selectCategoria" style="flex:1.5;">
                         <option value="GERAL">📂 GERAL</option>
-                        <option value="💰 RECEITA">💰 RECEITA</option>
                         <option value="ALIMENTAÇÃO">🧑‍🍳 ALIMENTAÇÃO</option>
                         <option value="MERCADO">🛒 MERCADO</option>
                         <option value="CARRO">🚗 CARRO</option>
@@ -186,7 +185,7 @@
                         <option value="PET">🐾 PET</option>
                         <option value="MANUTENÇÃO">🛠️ MANUTENÇÃO</option>
                         <option value="SAÚDE">💊 SAÚDE</option>
-                        <option value="CONTAS">💸 CONTAS</option>
+                        <option value="CONTAS">💰 CONTAS</option>
                         <option value="LAZER">🎈 LAZER</option>
                         <option value="FÉRIAS">🌴 FÉRIAS</option>
                     </select>
@@ -231,7 +230,6 @@
                         <select id="filtroCategoriaHist" class="filter-select-hist" onchange="renderizar()">
                             <option value="TODAS">TODAS</option>
                             <option value="GERAL">📂 GERAL</option>
-                            <option value="💰 RECEITA">💰 RECEITA</option>
                             <option value="ALIMENTAÇÃO">🧑‍🍳 ALIMENTAÇÃO</option>
                             <option value="MERCADO">🛒 MERCADO</option>
                             <option value="CARRO">🚗 CARRO</option>
@@ -241,7 +239,7 @@
                             <option value="PET">🐾 PET</option>
                             <option value="MANUTENÇÃO">🛠️ MANUTENÇÃO</option>
                             <option value="SAÚDE">💊 SAÚDE</option>
-                            <option value="CONTAS">💸 CONTAS</option>
+                            <option value="CONTAS">💰 CONTAS</option>
                             <option value="LAZER">🎈 LAZER</option>
                             <option value="FÉRIAS">🌴 FÉRIAS</option>
                         </select>
@@ -275,24 +273,24 @@
                 
                 <div class="stat-row">
                     <div class="stat-box highlight">
-                        <span style="font-size: 0.7rem; font-weight: bold;">Saldo do Período</span>
+                        <span style="font-size: 0.7rem; font-weight: bold;">Último Mês Fechado</span>
                         <span class="stat-number" id="lastClosedValue">R$ 0,00</span>
                     </div>
                     <div class="stat-box">
-                        <span id="labelMesSelecionado" style="font-size: 0.7rem;">Gasto Selecionado</span>
-                        <span class="stat-number" id="currentMonthActive" style="color: var(--danger)">R$ 0,00</span>
+                        <span id="labelMesSelecionado" style="font-size: 0.7rem;">Mês Selecionado</span>
+                        <span class="stat-number" id="currentMonthActive">R$ 0,00</span>
                     </div>
                 </div>
 
                 <div class="stat-row">
-                    <div class="stat-box"><span>Itens</span><span class="stat-number" id="totalTasks">0</span></div>
-                    <div class="stat-box"><span>Total Receitas</span><span class="stat-number" id="totalReceitasAdmin" style="color: #22c55e">R$ 0,00</span></div>
+                    <div class="stat-box"><span>Tarefas</span><span class="stat-number" id="totalTasks">0</span></div>
                     <div class="stat-box"><span>Ano Selecionado</span><span class="stat-number" id="totalYearCost">R$ 0,00</span></div>
+                    <div class="stat-box"><span>Total Geral</span><span class="stat-number" id="totalCost">R$ 0,00</span></div>
                 </div>
 
-                <h4>📈 Evolução Mensal de Gastos</h4>
+                <h4>📈 Evolução Mensal</h4>
                 <div class="chart-container"><canvas id="chartMensal"></canvas></div>
-                <h4>📊 Comparativo de Gastos Anual</h4>
+                <h4>📊 Comparativo Anual</h4>
                 <div class="chart-container"><canvas id="chartAnual"></canvas></div>
                 <h4>🍕 Gastos por Categoria</h4>
                 <div class="chart-container"><canvas id="chartCategoria"></canvas></div>
@@ -330,8 +328,8 @@
     const provider = new GoogleAuthProvider();
 
     let tarefasGlobais = [], balancosPermanentes = [], abaAtiva = "planejamento", idEdicao = null;
-    let chartM = null, chartC = null, chartA = null;
-    const coresBlink = { GERAL: '#f1f5f9', "💰 RECEITA": '#dcfce7', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
+    let chartM, chartC, chartA;
+    const coresBlink = { GERAL: '#f1f5f9', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
     const popularAnos = () => {
         const anoAtual = new Date().getFullYear();
@@ -339,7 +337,7 @@
         selects.forEach(sel => {
             if (!sel) return;
             sel.innerHTML = "";
-            for (let i = 2025; i <= anoAtual + 5; i++) {
+            for (let i = 2026; i <= anoAtual + 5; i++) {
                 const opt = document.createElement('option');
                 opt.value = i; opt.innerText = i;
                 if (i === anoAtual) opt.selected = true;
@@ -390,29 +388,28 @@
         const chaveMesAno = `${mesSel}/${anoSel}`;
 
         const tarefasMes = tarefasGlobais.filter(t => 
-            t.concluida && t.dataLimite && t.dataLimite.startsWith(`${anoSel}-${mesSel}`)
+            t.concluida && t.dataLimite.startsWith(`${anoSel}-${mesSel}`)
         );
         
-        const totalReceitas = tarefasMes.filter(t => t.categoria === "💰 RECEITA").reduce((acc, t) => acc + (t.custo || 0), 0);
-        const totalGastos = tarefasMes.filter(t => t.categoria !== "💰 RECEITA").reduce((acc, t) => acc + (t.custo || 0), 0);
-        const saldoFinal = totalReceitas - totalGastos;
-
-        if (tarefasMes.length === 0) return alert(`Não há dados para fechar em ${chaveMesAno}.`);
+        const totalMes = tarefasMes.reduce((acc, t) => acc + (t.custo || 0), 0);
+        
+        if (totalMes === 0) return alert(`Não há gastos concluídos para fechar em ${chaveMesAno}.`);
 
         const jaFechado = balancosPermanentes.find(b => b.mesAno === chaveMesAno);
         if (jaFechado) {
-            if (!confirm(`Já existe um fechamento de R$ ${jaFechado.valor.toFixed(2)} para ${chaveMesAno}. Deseja atualizar?`)) return;
+            if (!confirm(`Já existe um fechamento de R$ ${jaFechado.valor.toFixed(2)} para ${chaveMesAno}. Deseja atualizar com o novo valor de R$ ${totalMes.toFixed(2)}?`)) return;
             await deleteDoc(doc(db, "balancos", jaFechado.id));
         }
 
-        if (confirm(`Fechar mês ${chaveMesAno} com saldo de R$ ${saldoFinal.toFixed(2)}?`)) {
+        if (confirm(`Fechar mês ${chaveMesAno} com total de R$ ${totalMes.toFixed(2)}? AS TAREFAS SERÃO MANTIDAS NO HISTÓRICO.`)) {
             try {
                 await addDoc(collection(db, "balancos"), { 
                     mesAno: chaveMesAno, 
-                    valor: saldoFinal, 
+                    valor: totalMes, 
                     fechadoEm: new Date() 
                 });
-                alert(`Mês ${chaveMesAno} fechado com sucesso!`);
+                alert(`Mês ${chaveMesAno} fechado e registrado com sucesso!`);
+                location.reload();
             } catch (e) { alert("Erro: " + e.message); }
         }
     };
@@ -421,14 +418,10 @@
         const lista = document.getElementById('listaPrincipal'), areaForm = document.getElementById('areaForm'), areaAdmin = document.getElementById('areaAdmin'), areaFiltroH = document.getElementById('areaFiltroHistorico');
         lista.innerHTML = "";
         areaAdmin.classList.add('hidden'); areaForm.classList.add('hidden'); areaFiltroH.classList.add('hidden'); lista.classList.remove('hidden');
-        if (abaAtiva === 'admin') { 
-            areaAdmin.classList.remove('hidden'); 
-            lista.classList.add('hidden'); 
-            setTimeout(() => window.atualizarAdmin(), 100); 
-            return; 
-        }
+        if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
         
         if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
+        
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
         const hoje = new Date();
         const hojeStr = hoje.toLocaleDateString('sv-SE');
@@ -441,7 +434,7 @@
                 const m = t.descricao.match(/\(([^)]+)\)/);
                 if (m) {
                     const h = document.createElement('div'); h.className = 'lista-header'; 
-                    h.innerHTML = `<span>MERCADORIAS: ${t.descricao.split('(')[0].trim()}</span>
+                    h.innerHTML = `<span>LISTA: ${t.descricao.split('(')[0].trim()}</span>
                                   <button class="btn-edit-lista" onclick="prepararEdicaoLista('${t.id}')">✏️ Editar Itens</button>`; 
                     lista.appendChild(h);
                     m[1].split(',').map(i => i.trim()).filter(i => i !== "").forEach((item, idx) => {
@@ -467,7 +460,6 @@
             const mesFiltro = document.getElementById('filtroMesHist').value;
             const catFiltro = document.getElementById('filtroCategoriaHist').value;
             filtradas = tarefasGlobais.filter(t => {
-                if(!t.dataLimite) return false;
                 const [ano, mes] = t.dataLimite.split('-');
                 const bateAno = ano === anoFiltro;
                 const bateMes = mesFiltro === "TODOS" || mes === mesFiltro;
@@ -478,28 +470,27 @@
         }
 
         if (abaAtiva !== 'historico') {
-             filtradas.sort((a, b) => (a.dataLimite || "").localeCompare(b.dataLimite || ""));
+             filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
         }
 
         filtradas.forEach(t => {
-            const cor = (t.categoria === "💰 RECEITA") ? "#22c55e" : (coresBlink[t.categoria] || '#ffffff');
+            const div = document.createElement('div'), cor = coresBlink[t.categoria] || '#ffffff';
             const venceHoje = t.dataLimite === hojeStr && !t.concluida;
             const atrasada = t.dataLimite < hojeStr && !t.concluida;
-            const [tAno, tMes] = (t.dataLimite || "0000-00").split('-');
+            const [tAno, tMes] = t.dataLimite.split('-');
             const ehMesAtual = tMes === mesAtual && tAno === String(anoAtual);
             let classeExtra = "", rotuloAlerta = "";
             if (venceHoje) { classeExtra = "card-vence-hoje"; rotuloAlerta = '<span class="alert-icon-hoje">⚠️ VENCE HOJE</span>'; }
             else if (atrasada) { classeExtra = "card-atrasada"; rotuloAlerta = '<span class="alert-icon-atrasado">🚨 ATRASADA</span>'; }
             else if ((abaAtiva === 'cronograma' || abaAtiva === 'tarefas') && ehMesAtual) { classeExtra = "card-mes-atual"; }
+            else if (t.descricao.includes('(') && !t.concluida) { classeExtra = "card-blink"; }
             
-            const div = document.createElement('div');
             div.style.setProperty('--blink-color', cor); div.className = `tarefa-card ${classeExtra}`;
-            div.style.borderLeftColor = cor;
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
-                <div class="info-area"><span class="cat-badge" style="color:${cor}">${t.categoria}</span>
+                <div class="info-area"><span class="cat-badge">${t.categoria}</span>
                 <span class="task-name">${t.descricao.split('(')[0]} ${rotuloAlerta}</span>
-                <span class="task-meta">📅 ${(t.dataLimite || "--/--/--").split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia ? `(${t.recorrencia})` : ''}</span>
-                ${t.custo > 0 ? `<span class="task-meta task-cost" style="color:${t.categoria === '💰 RECEITA' ? '#22c55e' : '#059669'}">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
+                <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia ? `(${t.recorrencia})` : ''}</span>
+                ${t.custo > 0 ? `<span class="task-meta task-cost">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
                 <div class="action-btns"><button class="btn-icon" onclick="prepararEdicao('${t.id}')">✏️</button><button class="btn-icon" onclick="exterminar('${t.id}')">🗑️</button></div>`;
             lista.appendChild(div);
         });
@@ -568,8 +559,8 @@
                 const dataSugeridaBR = `${diaSug}/${mesSug}/${anoSug}`;
                 const entradaData = prompt(`[AGENDAMENTO] Para quando é a PRÓXIMA?\nFormato: DD/MM/AAAA`, dataSugeridaBR);
                 if (entradaData === null) return;
-                const valorAtualBR = (t.custo || 0).toFixed(2).replace('.', ',');
-                const entradaValor = prompt(`[VALOR PAGO/RECEBIDO] Qual foi o valor real desta vez?`, valorAtualBR);
+                const valorAtualBR = t.custo.toFixed(2).replace('.', ',');
+                const entradaValor = prompt(`[VALOR PAGO] Qual foi o valor real pago desta vez?`, valorAtualBR);
                 if (entradaValor === null) return;
                 const partes = entradaData.split('/');
                 if (partes.length !== 3) return alert("Data inválida!");
@@ -599,7 +590,7 @@
         mudarAba('planejamento');
         document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
         const inputC = document.getElementById('inputCusto');
-        inputC.value = (t.custo || 0).toFixed(2).replace(".", ",");
+        inputC.value = t.custo.toFixed(2).replace(".", ",");
         mascaraDinheiro(inputC);
         document.getElementById('inputData').value = t.dataLimite;
         document.getElementById('inputHora').value = t.hora || "";
@@ -612,46 +603,38 @@
     window.atualizarAdmin = () => {
         const mesSel = document.getElementById('adminFiltroMes').value, anoSel = document.getElementById('adminFiltroAno').value;
         const cats = {}, meses = {}, anos = {}, mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-        
-        let totalReceitasSel = 0;
-        let totalGastosSel = 0;
-        let totalGeralGastoSomado = 0;
-        let totalAnoGastoSomado = 0;
+        let totalSelecionado = 0;
+        let totalGeralSomado = 0;
+        let totalAnoSomado = 0;
 
         tarefasGlobais.forEach(t => { 
-            if(t.custo > 0 && t.concluida && t.dataLimite) { 
-                const parts = t.dataLimite.split('-');
-                const ano = parts[0];
-                const mes = parts[1];
+            if(t.custo > 0 && t.concluida) { 
+                const [ano, mes] = t.dataLimite.split('-'); 
                 const kMes = `${mesesNomes[parseInt(mes)-1]}/${ano}`; 
                 
-                if (t.categoria === "💰 RECEITA") {
-                    if(mes === mesSel && ano === anoSel) totalReceitasSel += t.custo;
-                } else {
-                    meses[kMes] = (meses[kMes] || 0) + t.custo;
-                    totalGeralGastoSomado += t.custo;
-                    if(ano === anoSel) {
-                        totalAnoGastoSomado += t.custo;
-                        anos[ano] = (anos[ano] || 0) + t.custo;
-                        if(mes === mesSel) {
-                            totalGastosSel += t.custo;
-                            cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
-                        }
-                    }
+                meses[kMes] = (meses[kMes] || 0) + t.custo;
+                totalGeralSomado += t.custo;
+
+                if(ano === anoSel) {
+                    totalAnoSomado += t.custo;
+                    anos[ano] = (anos[ano] || 0) + t.custo;
+                }
+
+                if(mes === mesSel && ano === anoSel) {
+                    totalSelecionado += t.custo;
+                    cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
                 }
             } 
         });
 
-        const saldoPeriodo = totalReceitasSel - totalGastosSel;
+        const sortedB = [...balancosPermanentes].sort((a,b) => (b.fechadoEm?.seconds || 0) - (a.fechadoEm?.seconds || 0));
         
-        document.getElementById('labelMesSelecionado').innerText = `Gasto ${mesesNomes[parseInt(mesSel)-1].toUpperCase()} / ${anoSel}`;
-        document.getElementById('lastClosedValue').innerText = `R$ ${saldoPeriodo.toFixed(2)}`;
-        document.getElementById('lastClosedValue').style.color = saldoPeriodo >= 0 ? "#22c55e" : "#ef4444";
-        document.getElementById('currentMonthActive').innerText = `R$ ${totalGastosSel.toFixed(2)}`;
-        document.getElementById('totalReceitasAdmin').innerText = `R$ ${totalReceitasSel.toFixed(2)}`;
+        document.getElementById('labelMesSelecionado').innerText = `Total ${mesesNomes[parseInt(mesSel)-1].toUpperCase()} / ${anoSel}`;
+        document.getElementById('lastClosedValue').innerText = `R$ ${(sortedB[0]?.valor || 0).toFixed(2)}`;
+        document.getElementById('currentMonthActive').innerText = `R$ ${totalSelecionado.toFixed(2)}`;
         document.getElementById('totalTasks').innerText = tarefasGlobais.length;
-        document.getElementById('totalYearCost').innerText = `R$ ${totalAnoGastoSomado.toFixed(2)}`;
-        document.getElementById('totalCost').innerText = `R$ ${totalGeralGastoSomado.toFixed(2)}`;
+        document.getElementById('totalYearCost').innerText = `R$ ${totalAnoSomado.toFixed(2)}`;
+        document.getElementById('totalCost').innerText = `R$ ${totalGeralSomado.toFixed(2)}`;
 
         const cCat = document.getElementById('listaCustosCategoria'); cCat.innerHTML = "";
         Object.keys(cats).sort().forEach(c => { 
@@ -660,13 +643,7 @@
         });
 
         const cMes = document.getElementById('listaCustosMensais'); cMes.innerHTML = "";
-        const sortedMesesKeys = Object.keys(meses).sort((a,b) => {
-            const [mA, aA] = a.split('/'); const [mB, aB] = b.split('/');
-            const idxA = mesesNomes.indexOf(mA); const idxB = mesesNomes.indexOf(mB);
-            return (aA + (idxA + 10)).localeCompare(aB + (idxB + 10));
-        }).reverse().slice(0, 12);
-
-        sortedMesesKeys.forEach(m => { 
+        Object.keys(meses).reverse().slice(0, 12).forEach(m => { 
             const d = document.createElement('div'); d.className = 'cat-cost-item'; 
             d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cMes.appendChild(d); 
         });
@@ -676,42 +653,30 @@
 
     function atualizarGraficos(dM, dC, dA) {
         if(chartM) chartM.destroy(); if(chartC) chartC.destroy(); if(chartA) chartA.destroy();
-        
-        const mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-        const coresCategorias = { "GERAL": "#6366f1", "💰 RECEITA": "#22c55e", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARRO": "#f44336", "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63", "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3" };
-
-        const labelsM = Object.keys(dM).sort((a,b) => {
-            const [mA, aA] = a.split('/'); const [mB, aB] = b.split('/');
-            return (aA + (mesesNomes.indexOf(mA)+10)).localeCompare(aB + (mesesNomes.indexOf(mB)+10));
-        });
-
-        chartM = new Chart(document.getElementById('chartMensal'), { 
-            type: 'line', 
-            data: { labels: labelsM.length ? labelsM : ["--"], datasets: [{ label: 'R$', data: labelsM.map(l => dM[l]), borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-
+        const coresCategorias = {
+            "GERAL": "#6366f1", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARRO": "#f44336",
+            "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63",
+            "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3"
+        };
         const labelsC = Object.keys(dC);
-        chartC = new Chart(document.getElementById('chartCategoria'), { 
-            type: 'doughnut', 
-            data: { labels: labelsC.length ? labelsC : ["Sem dados"], datasets: [{ data: labelsC.length ? Object.values(dC) : [1], backgroundColor: labelsC.map(c => coresCategorias[c] || '#eee') }] },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-
-        const labelsA = Object.keys(dA).sort();
-        chartA = new Chart(document.getElementById('chartAnual'), { 
-            type: 'bar', 
-            data: { labels: labelsA.length ? labelsA : ["--"], datasets: [{ label: 'R$', data: labelsA.map(l => dA[l]), backgroundColor: '#a855f7', borderRadius: 8 }] },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        const backgroundColorsC = labelsC.map(cat => coresCategorias[cat] || '#cbd5e1');
+        chartM = new Chart(document.getElementById('chartMensal'), { type: 'line', data: { labels: Object.keys(dM), datasets: [{ label: 'R$', data: Object.values(dM), borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] } });
+        chartC = new Chart(document.getElementById('chartCategoria'), { type: 'doughnut', data: { labels: labelsC, datasets: [{ data: Object.values(dC), backgroundColor: backgroundColorsC }] } });
+        chartA = new Chart(document.getElementById('chartAnual'), { type: 'bar', data: { labels: Object.keys(dA), datasets: [{ label: 'Ano', data: Object.values(dA), backgroundColor: '#a855f7', borderRadius: 8 }] } });
     }
 
     window.exportarBackup = () => { 
         const pack = { tarefas: tarefasGlobais, balancos: balancosPermanentes, exportadoEm: new Date() };
         const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pack, null, 2)); 
         const d = new Date();
-        const nomeArquivo = `Gestao_familiar_${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}.json`;
-        const a = document.createElement('a'); a.setAttribute("href", ds); a.setAttribute("download", nomeArquivo); a.click(); 
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth() + 1).padStart(2, '0');
+        const ano = d.getFullYear();
+        const nomeArquivo = `Gestão familiar - ${dia}-${mes}-${ano}.json`;
+        const a = document.createElement('a'); 
+        a.setAttribute("href", ds); 
+        a.setAttribute("download", nomeArquivo); 
+        a.click(); 
     };
 
     window.importarBackup = (event) => {
@@ -720,25 +685,27 @@
         reader.onload = async (e) => {
             try {
                 const dados = JSON.parse(e.target.result);
-                if (confirm(`Restaurar backup? Isso limpará os dados atuais.`)) {
+                const tParaRestaurar = dados.tarefas || [];
+                const bParaRestaurar = dados.balancos || [];
+                if (confirm(`Deseja restaurar o backup de "${file.name}"? Isso substituirá os dados atuais.`)) {
                     const snapT = await getDocs(collection(db, "tarefas"));
                     await Promise.all(snapT.docs.map(d => deleteDoc(doc(db, "tarefas", d.id))));
                     const snapB = await getDocs(collection(db, "balancos"));
                     await Promise.all(snapB.docs.map(d => deleteDoc(doc(db, "balancos", d.id))));
-                    for (const item of (dados.tarefas || [])) {
+                    for (const item of tParaRestaurar) {
                         const nt = { ...item }; delete nt.id;
                         if (nt.criadoEm?.seconds) nt.criadoEm = new Date(nt.criadoEm.seconds * 1000);
                         await addDoc(collection(db, "tarefas"), nt);
                     }
-                    for (const item of (dados.balancos || [])) {
+                    for (const item of bParaRestaurar) {
                         const nb = { ...item }; delete nb.id;
                         if (nb.fechadoEm?.seconds) nb.fechadoEm = new Date(nb.fechadoEm.seconds * 1000);
                         await addDoc(collection(db, "balancos"), nb);
                     }
-                    alert("Backup restaurado!");
+                    alert("Backup restaurado com sucesso!");
                     location.reload();
                 }
-            } catch (err) { alert("Erro no backup."); }
+            } catch (err) { alert("Erro ao processar o arquivo de backup."); }
         };
         reader.readAsText(file);
     };
