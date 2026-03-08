@@ -104,7 +104,7 @@
         .cat-cost-name { font-weight: 700; color: #475569; }
         .cat-cost-value { font-weight: 800; color: #059669; }
 
-        .chart-container { background: #f8fafc; padding: 15px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .chart-container { background: #f8fafc; padding: 15px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; position: relative; height: 250px; }
         .btn-lock { background: #1e1b4b; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 20px; width: 100%; font-size: 0.8rem; }
         .btn-print { background: #059669; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 20px; width: 100%; font-size: 0.8rem; }
 
@@ -334,13 +334,11 @@
     const coresBlink = { GERAL: '#f1f5f9', "💰 RECEITA": '#dcfce7', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
     const popularAnos = () => {
-        const agora = new Date();
-        const anoAtual = agora.getFullYear();
+        const anoAtual = new Date().getFullYear();
         const selects = [document.getElementById('filtroAnoHist'), document.getElementById('adminFiltroAno')];
         selects.forEach(sel => {
             if (!sel) return;
             sel.innerHTML = "";
-            // Garante que 2025 e 2026 estejam no seletor
             for (let i = 2025; i <= anoAtual + 5; i++) {
                 const opt = document.createElement('option');
                 opt.value = i; opt.innerText = i;
@@ -375,6 +373,7 @@
             onSnapshot(query(collection(db, "tarefas"), orderBy("criadoEm", "desc")), snap => {
                 tarefasGlobais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderizar();
+                if(abaAtiva === 'admin') window.atualizarAdmin();
             });
             onSnapshot(collection(db, "balancos"), snap => {
                 balancosPermanentes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -415,7 +414,6 @@
                     fechadoEm: new Date() 
                 });
                 alert(`Mês ${chaveMesAno} fechado com sucesso!`);
-                location.reload();
             } catch (e) { alert("Erro: " + e.message); }
         }
     };
@@ -428,7 +426,6 @@
         
         if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
-
         const hoje = new Date();
         const hojeStr = hoje.toLocaleDateString('sv-SE');
         const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -466,7 +463,7 @@
             const mesFiltro = document.getElementById('filtroMesHist').value;
             const catFiltro = document.getElementById('filtroCategoriaHist').value;
             filtradas = tarefasGlobais.filter(t => {
-                if (!t.dataLimite) return false;
+                if(!t.dataLimite) return false;
                 const [ano, mes] = t.dataLimite.split('-');
                 const bateAno = ano === anoFiltro;
                 const bateMes = mesFiltro === "TODOS" || mes === mesFiltro;
@@ -627,11 +624,9 @@
                 } else {
                     meses[kMes] = (meses[kMes] || 0) + t.custo;
                     totalGeralGastoSomado += t.custo;
-
                     if(ano === anoSel) {
                         totalAnoGastoSomado += t.custo;
                         anos[ano] = (anos[ano] || 0) + t.custo;
-
                         if(mes === mesSel) {
                             totalGastosSel += t.custo;
                             cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
@@ -659,13 +654,10 @@
         });
 
         const cMes = document.getElementById('listaCustosMensais'); cMes.innerHTML = "";
-        // Ordena chaves de meses para garantir ordem cronológica no histórico (últimos 12 meses)
         const sortedMesesKeys = Object.keys(meses).sort((a,b) => {
-            const [mA, aA] = a.split('/');
-            const [mB, aB] = b.split('/');
-            const idxA = mesesNomes.indexOf(mA);
-            const idxB = mesesNomes.indexOf(mB);
-            return (aA + (idxA + 10).toString()).localeCompare(aB + (idxB + 10).toString());
+            const [mA, aA] = a.split('/'); const [mB, aB] = b.split('/');
+            const idxA = mesesNomes.indexOf(mA); const idxB = mesesNomes.indexOf(mB);
+            return (aA + (idxA + 10)).localeCompare(aB + (idxB + 10));
         }).reverse().slice(0, 12);
 
         sortedMesesKeys.forEach(m => { 
@@ -683,10 +675,6 @@
             "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63",
             "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3"
         };
-        const labelsC = Object.keys(dC);
-        const backgroundColorsC = labelsC.map(cat => coresCategorias[cat] || '#cbd5e1');
-        
-        // Ordenação dos meses para o gráfico de linha
         const mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
         const labelsM = Object.keys(dM).sort((a,b) => {
             const [mA, aA] = a.split('/'); const [mB, aB] = b.split('/');
@@ -696,26 +684,22 @@
 
         chartM = new Chart(document.getElementById('chartMensal'), { 
             type: 'line', 
-            data: { 
-                labels: labelsM.length ? labelsM : ["--"], 
-                datasets: [{ label: 'Gasto R$', data: valuesM.length ? valuesM : [0], borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] 
-            } 
+            data: { labels: labelsM.length ? labelsM : ["--"], datasets: [{ label: 'Gasto R$', data: valuesM.length ? valuesM : [0], borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] },
+            options: { maintainAspectRatio: false, responsive: true }
         });
 
+        const labelsC = Object.keys(dC);
         chartC = new Chart(document.getElementById('chartCategoria'), { 
             type: 'doughnut', 
-            data: { 
-                labels: labelsC.length ? labelsC : ["Sem dados"], 
-                datasets: [{ data: Object.values(dC).length ? Object.values(dC) : [1], backgroundColor: backgroundColorsC.length ? backgroundColorsC : ['#eee'] }] 
-            } 
+            data: { labels: labelsC.length ? labelsC : ["Sem dados"], datasets: [{ data: labelsC.length ? Object.values(dC) : [1], backgroundColor: labelsC.length ? labelsC.map(c => coresCategorias[c] || '#eee') : ['#eee'] }] },
+            options: { maintainAspectRatio: false, responsive: true }
         });
 
+        const labelsA = Object.keys(dA).sort();
         chartA = new Chart(document.getElementById('chartAnual'), { 
             type: 'bar', 
-            data: { 
-                labels: Object.keys(dA).length ? Object.keys(dA) : ["--"], 
-                datasets: [{ label: 'Gasto Ano', data: Object.values(dA).length ? Object.values(dA) : [0], backgroundColor: '#a855f7', borderRadius: 8 }] 
-            } 
+            data: { labels: labelsA.length ? labelsA : ["--"], datasets: [{ label: 'Gasto Ano', data: labelsA.length ? labelsA.map(l => dA[l]) : [0], backgroundColor: '#a855f7', borderRadius: 8 }] },
+            options: { maintainAspectRatio: false, responsive: true }
         });
     }
 
@@ -723,14 +707,8 @@
         const pack = { tarefas: tarefasGlobais, balancos: balancosPermanentes, exportadoEm: new Date() };
         const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pack, null, 2)); 
         const d = new Date();
-        const dia = String(d.getDate()).padStart(2, '0');
-        const mes = String(d.getMonth() + 1).padStart(2, '0');
-        const ano = d.getFullYear();
-        const nomeArquivo = `Gestão familiar - ${dia}-${mes}-${ano}.json`;
-        const a = document.createElement('a'); 
-        a.setAttribute("href", ds); 
-        a.setAttribute("download", nomeArquivo); 
-        a.click(); 
+        const nomeArquivo = `Gestao_familiar_${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}.json`;
+        const a = document.createElement('a'); a.setAttribute("href", ds); a.setAttribute("download", nomeArquivo); a.click(); 
     };
 
     window.importarBackup = (event) => {
@@ -739,27 +717,25 @@
         reader.onload = async (e) => {
             try {
                 const dados = JSON.parse(e.target.result);
-                const tParaRestaurar = dados.tarefas || [];
-                const bParaRestaurar = dados.balancos || [];
-                if (confirm(`Deseja restaurar o backup de "${file.name}"? Isso substituirá os dados atuais.`)) {
+                if (confirm(`Restaurar backup? Isso limpará os dados atuais.`)) {
                     const snapT = await getDocs(collection(db, "tarefas"));
                     await Promise.all(snapT.docs.map(d => deleteDoc(doc(db, "tarefas", d.id))));
                     const snapB = await getDocs(collection(db, "balancos"));
                     await Promise.all(snapB.docs.map(d => deleteDoc(doc(db, "balancos", d.id))));
-                    for (const item of tParaRestaurar) {
+                    for (const item of (dados.tarefas || [])) {
                         const nt = { ...item }; delete nt.id;
                         if (nt.criadoEm?.seconds) nt.criadoEm = new Date(nt.criadoEm.seconds * 1000);
                         await addDoc(collection(db, "tarefas"), nt);
                     }
-                    for (const item of bParaRestaurar) {
+                    for (const item of (dados.balancos || [])) {
                         const nb = { ...item }; delete nb.id;
                         if (nb.fechadoEm?.seconds) nb.fechadoEm = new Date(nb.fechadoEm.seconds * 1000);
                         await addDoc(collection(db, "balancos"), nb);
                     }
-                    alert("Backup restaurado com sucesso!");
+                    alert("Backup restaurado!");
                     location.reload();
                 }
-            } catch (err) { alert("Erro ao processar o arquivo de backup."); }
+            } catch (err) { alert("Erro no backup."); }
         };
         reader.readAsText(file);
     };
