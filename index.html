@@ -290,9 +290,9 @@
                     <div class="stat-box"><span>Ano Selecionado</span><span class="stat-number" id="totalYearCost">R$ 0,00</span></div>
                 </div>
 
-                <h4>📈 Evolução Mensal</h4>
+                <h4>📈 Evolução Mensal de Gastos</h4>
                 <div class="chart-container"><canvas id="chartMensal"></canvas></div>
-                <h4>📊 Comparativo Anual</h4>
+                <h4>📊 Comparativo de Gastos Anual</h4>
                 <div class="chart-container"><canvas id="chartAnual"></canvas></div>
                 <h4>🍕 Gastos por Categoria</h4>
                 <div class="chart-container"><canvas id="chartCategoria"></canvas></div>
@@ -339,7 +339,8 @@
         selects.forEach(sel => {
             if (!sel) return;
             sel.innerHTML = "";
-            for (let i = 2026; i <= anoAtual + 5; i++) {
+            // Mudança para 2025 para captar dados do início deste ano ou do ano passado
+            for (let i = 2025; i <= anoAtual + 5; i++) {
                 const opt = document.createElement('option');
                 opt.value = i; opt.innerText = i;
                 if (i === anoAtual) opt.selected = true;
@@ -608,25 +609,32 @@
     window.atualizarAdmin = () => {
         const mesSel = document.getElementById('adminFiltroMes').value, anoSel = document.getElementById('adminFiltroAno').value;
         const cats = {}, meses = {}, anos = {}, mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+        
         let totalReceitasSel = 0;
         let totalGastosSel = 0;
         let totalGeralGastoSomado = 0;
         let totalAnoGastoSomado = 0;
 
         tarefasGlobais.forEach(t => { 
-            if(t.custo > 0 && t.concluida) { 
+            if(t.custo > 0 && t.concluida && t.dataLimite) { 
                 const [ano, mes] = t.dataLimite.split('-'); 
                 const kMes = `${mesesNomes[parseInt(mes)-1]}/${ano}`; 
                 
                 if (t.categoria === "💰 RECEITA") {
                     if(mes === mesSel && ano === anoSel) totalReceitasSel += t.custo;
                 } else {
+                    // Soma como Despesa (ou categoria antiga)
                     meses[kMes] = (meses[kMes] || 0) + t.custo;
                     totalGeralGastoSomado += t.custo;
-                    if(ano === anoSel) totalAnoGastoSomado += t.custo;
-                    if(mes === mesSel && ano === anoSel) {
-                        totalGastosSel += t.custo;
-                        cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
+
+                    if(ano === anoSel) {
+                        totalAnoGastoSomado += t.custo;
+                        anos[ano] = (anos[ano] || 0) + t.custo;
+
+                        if(mes === mesSel) {
+                            totalGastosSel += t.custo;
+                            cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
+                        }
                     }
                 }
             } 
@@ -667,9 +675,30 @@
         };
         const labelsC = Object.keys(dC);
         const backgroundColorsC = labelsC.map(cat => coresCategorias[cat] || '#cbd5e1');
-        chartM = new Chart(document.getElementById('chartMensal'), { type: 'line', data: { labels: Object.keys(dM), datasets: [{ label: 'Gasto R$', data: Object.values(dM), borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] } });
-        chartC = new Chart(document.getElementById('chartCategoria'), { type: 'doughnut', data: { labels: labelsC, datasets: [{ data: Object.values(dC), backgroundColor: backgroundColorsC }] } });
-        chartA = new Chart(document.getElementById('chartAnual'), { type: 'bar', data: { labels: Object.keys(dA), datasets: [{ label: 'Gasto Ano', data: Object.values(dA), backgroundColor: '#a855f7', borderRadius: 8 }] } });
+        
+        chartM = new Chart(document.getElementById('chartMensal'), { 
+            type: 'line', 
+            data: { 
+                labels: Object.keys(dM).length ? Object.keys(dM) : ["--"], 
+                datasets: [{ label: 'Gasto R$', data: Object.values(dM).length ? Object.values(dM) : [0], borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] 
+            } 
+        });
+
+        chartC = new Chart(document.getElementById('chartCategoria'), { 
+            type: 'doughnut', 
+            data: { 
+                labels: labelsC.length ? labelsC : ["Sem dados"], 
+                datasets: [{ data: Object.values(dC).length ? Object.values(dC) : [1], backgroundColor: backgroundColorsC.length ? backgroundColorsC : ['#eee'] }] 
+            } 
+        });
+
+        chartA = new Chart(document.getElementById('chartAnual'), { 
+            type: 'bar', 
+            data: { 
+                labels: Object.keys(dA).length ? Object.keys(dA) : ["--"], 
+                datasets: [{ label: 'Gasto Ano', data: Object.values(dA).length ? Object.values(dA) : [0], backgroundColor: '#a855f7', borderRadius: 8 }] 
+            } 
+        });
     }
 
     window.exportarBackup = () => { 
