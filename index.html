@@ -206,8 +206,8 @@
                     </select>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" id="inputCusto" placeholder="R$ 0,00 TOTAL" style="flex:1.5;" oninput="mascaraDinheiro(this)">
-                    <input type="number" id="inputParcelas" placeholder="Parcelas" style="flex:1;" min="1" max="60">
+                    <input type="text" id="inputCusto" placeholder="VALOR TOTAL DA COMPRA" style="flex:1.5;" oninput="mascaraDinheiro(this)">
+                    <input type="number" id="inputParcelas" placeholder="Qtd Parcelas" style="flex:1;" min="1" max="60">
                 </div>
                 <div style="display:flex; gap:8px;">
                     <input type="date" id="inputData" style="flex:1.5;">
@@ -483,30 +483,43 @@
         let cStr = document.getElementById('inputCusto').value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
         const valorDigitado = parseFloat(cStr) || 0, dataIni = document.getElementById('inputData').value, hora = document.getElementById('inputHora').value, cat = document.getElementById('selectCategoria').value, rec = document.getElementById('selectRecorrencia').value;
         const parcelas = parseInt(document.getElementById('inputParcelas').value) || 1;
+
         if ((!dBase && !subRaw) || !dataIni) return alert("Preencha descrição e data!");
+
         let dFinal = dBase || cat;
         if (subRaw !== "") dFinal += ` (${subRaw})`;
-        const custoPorParcela = valorDigitado / parcelas;
+        
+        // CORREÇÃO: Divide o valor total pelo número de parcelas
+        const custoIndividual = valorDigitado / parcelas;
+
         if (idEdicao) {
             await updateDoc(doc(db, "tarefas", idEdicao), { descricao: dFinal, custo: valorDigitado, dataLimite: dataIni, hora, categoria: cat, recorrencia: rec });
             idEdicao = null; document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
         } else {
+            // Salva cada parcela
             for (let i = 0; i < parcelas; i++) {
                 let dParcela = new Date(dataIni + 'T12:00:00');
                 dParcela.setMonth(dParcela.getMonth() + i);
                 const dataFmt = dParcela.toISOString().split('T')[0];
+                
+                // CORREÇÃO: Garante que a descrição mostre (1/2), (2/2) etc.
                 const dP = parcelas > 1 ? `${dFinal} (${i + 1}/${parcelas})` : dFinal;
+                
                 await addDoc(collection(db, "tarefas"), { 
-                    descricao: dP, custo: custoPorParcela, dataLimite: dataFmt, 
-                    hora, categoria: cat, recorrencia: parcelas > 1 ? "MENSAL" : rec, 
+                    descricao: dP, 
+                    custo: custoIndividual, 
+                    dataLimite: dataFmt, 
+                    hora, 
+                    categoria: cat, 
+                    recorrencia: parcelas > 1 ? "MENSAL" : rec, 
                     concluida: false, criadoEm: new Date(), statusItens: {} 
                 });
             }
+            // CORREÇÃO: Salto para aba faturas no final do loop
+            if (cat === "CARTÃO") { mudarAba('faturas'); }
         }
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = ""; document.getElementById('inputParcelas').value = "";
         resetarCamposTempo();
-        // SALTO AUTOMÁTICO: Se for categoria CARTÃO, pula para a aba Faturas
-        if (cat === "CARTÃO") { mudarAba('faturas'); }
     };
     document.getElementById('btnSalvar').onclick = window.btnSalvarClick;
 
