@@ -430,7 +430,6 @@
                 const matches = [...t.descricao.matchAll(/\(([^)]+)\)/g)];
                 for (const m of matches) {
                     const content = m[1];
-                    // CORREÇÃO: Ignora se o conteúdo do parênteses for apenas um marcador de parcela (ex: 1/2)
                     if (!/^\d+\/\d+$/.test(content)) {
                         const h = document.createElement('div'); h.className = 'lista-header'; 
                         h.innerHTML = `<span>LISTA: ${t.descricao.split('(')[0].trim()}</span><button class="btn-edit-lista" onclick="prepararEdicaoLista('${t.id}')">✏️</button>`; 
@@ -501,8 +500,10 @@
             idEdicao = null; 
             document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
             
+            // LÓGICA DE SALTO AO EDITAR
             if (cat === "CARTÃO") mudarAba('faturas');
-            else if (valorDigitado > 0) mudarAba('cronograma');
+            else if (valorDigitado > 0 && rec !== "NENHUMA") mudarAba('cronograma');
+            else if (valorDigitado > 0 && rec === "NENHUMA") mudarAba('planejamento');
             else mudarAba('tarefas');
 
         } else {
@@ -519,8 +520,10 @@
                 });
             }
             
+            // LÓGICA DE SALTO AO CRIAR NOVO
             if (cat === "CARTÃO") mudarAba('faturas');
-            else if (valorDigitado > 0) mudarAba('cronograma');
+            else if (valorDigitado > 0 && rec !== "NENHUMA") mudarAba('cronograma');
+            else if (valorDigitado > 0 && rec === "NENHUMA") mudarAba('planejamento');
             else mudarAba('tarefas');
         }
         
