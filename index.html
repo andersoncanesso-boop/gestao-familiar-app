@@ -80,7 +80,6 @@
         .task-meta { font-size: 0.7rem; color: #9ca3af; display: block; margin-top: 2px; }
         .task-cost { font-weight: 800; color: #059669; }
 
-        /* Estilo para o Painel de Fatura */
         .fatura-header {
             background: linear-gradient(135deg, #4338ca, #6366f1);
             color: white; padding: 20px; border-radius: 22px; margin-bottom: 15px;
@@ -207,8 +206,8 @@
                     </select>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" id="inputCusto" placeholder="R$ 0,00" style="flex:1.5;" oninput="mascaraDinheiro(this)">
-                    <input type="number" id="inputParcelas" placeholder="Parcelas (Ex: 10)" style="flex:1;" min="1" max="60">
+                    <input type="text" id="inputCusto" placeholder="R$ 0,00 TOTAL" style="flex:1.5;" oninput="mascaraDinheiro(this)">
+                    <input type="number" id="inputParcelas" placeholder="Parcelas" style="flex:1;" min="1" max="60">
                 </div>
                 <div style="display:flex; gap:8px;">
                     <input type="date" id="inputData" style="flex:1.5;">
@@ -267,7 +266,6 @@
                 <span style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase;">Total da Fatura</span>
                 <span class="fatura-valor" id="valorTotalFatura">R$ 0,00</span>
             </div>
-            
             <div class="filter-section">
                 <span class="filter-label">Consultar Outros Meses</span>
                 <div style="display:flex; gap:10px;">
@@ -307,37 +305,22 @@
             <div class="admin-panel">
                 <button class="btn-print" onclick="window.print()">🖨️ Gerar Relatório para Impressão</button>
                 <button class="btn-lock" onclick="fecharMes()">🔒 Confirmar e Congelar Mês Atual</button>
-                
                 <div class="stat-row">
-                    <div class="stat-box highlight">
-                        <span style="font-size: 0.7rem; font-weight: bold;">Último Mês Fechado</span>
-                        <span class="stat-number" id="lastClosedValue">R$ 0,00</span>
-                    </div>
-                    <div class="stat-box">
-                        <span id="labelMesSelecionado" style="font-size: 0.7rem;">Mês Selecionado</span>
-                        <span class="stat-number" id="currentMonthActive">R$ 0,00</span>
-                    </div>
+                    <div class="stat-box highlight"><span>Último Fechado</span><span class="stat-number" id="lastClosedValue">R$ 0,00</span></div>
+                    <div class="stat-box"><span id="labelMesSelecionado">Mês Selecionado</span><span class="stat-number" id="currentMonthActive">R$ 0,00</span></div>
                 </div>
-
                 <div class="stat-row">
                     <div class="stat-box"><span>Tarefas</span><span class="stat-number" id="totalTasks">0</span></div>
-                    <div class="stat-box"><span>Ano Selecionado</span><span class="stat-number" id="totalYearCost">R$ 0,00</span></div>
+                    <div class="stat-box"><span>Ano</span><span class="stat-number" id="totalYearCost">R$ 0,00</span></div>
                     <div class="stat-box"><span>Total Geral</span><span class="stat-number" id="totalCost">R$ 0,00</span></div>
                 </div>
-
-                <h4>📈 Evolução Mensal</h4>
-                <div class="chart-container"><canvas id="chartMensal"></canvas></div>
-                <h4>📊 Comparativo Anual</h4>
-                <div class="chart-container"><canvas id="chartAnual"></canvas></div>
-                <h4>🍕 Gastos por Categoria</h4>
-                <div class="chart-container"><canvas id="chartCategoria"></canvas></div>
-                <h4>📅 Histórico de Fechamento</h4>
-                <div id="listaCustosMensais" class="cat-costs-list"></div>
-                <h4>📂 Custos por Categoria</h4>
-                <div id="listaCustosCategoria" class="cat-costs-list"></div>
-                
+                <h4>📈 Evolução Mensal</h4><div class="chart-container"><canvas id="chartMensal"></canvas></div>
+                <h4>📊 Comparativo Anual</h4><div class="chart-container"><canvas id="chartAnual"></canvas></div>
+                <h4>🍕 Gastos por Categoria</h4><div class="chart-container"><canvas id="chartCategoria"></canvas></div>
+                <h4>📅 Histórico de Fechamento</h4><div id="listaCustosMensais" class="cat-costs-list"></div>
+                <h4>📂 Custos por Categoria</h4><div id="listaCustosCategoria" class="cat-costs-list"></div>
                 <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button class="btn-backup" onclick="exportarBackup()">📥 Backup Completo</button>
+                    <button class="btn-backup" onclick="exportarBackup()">📥 Backup</button>
                     <label class="btn-backup" style="display:flex; align-items:center; justify-content:center;">📤 Restaurar<input type="file" id="fileRestore" hidden onchange="importarBackup(event)"></label>
                 </div>
             </div>
@@ -418,15 +401,15 @@
     });
 
     window.fecharMes = async () => {
-        const senha = prompt("Digite a senha de administrador para CONGELAR o mês:");
+        const senha = prompt("Senha Admin:");
         if (senha !== "1972") return alert("Senha incorreta!");
-        const mesS = document.getElementById('adminFiltroMes').value, anoS = document.getElementById('adminFiltroAno').value;
-        const chave = `${mesS}/${anoS}`;
-        const tMes = tarefasGlobais.filter(t => t.concluida && t.dataLimite.startsWith(`${anoS}-${mesS}`));
+        const mS = document.getElementById('adminFiltroMes').value, aS = document.getElementById('adminFiltroAno').value;
+        const chave = `${mS}/${aS}`;
+        const tMes = tarefasGlobais.filter(t => t.concluida && t.dataLimite.startsWith(`${aS}-${mS}`));
         const total = tMes.reduce((acc, t) => acc + (t.custo || 0), 0);
         if (total === 0) return alert(`Nada para fechar em ${chave}.`);
         const ja = balancosPermanentes.find(b => b.mesAno === chave);
-        if (ja) { if (!confirm(`Atualizar fechamento existente?`)) return; await deleteDoc(doc(db, "balancos", ja.id)); }
+        if (ja) { if (!confirm(`Atualizar fechamento?`)) return; await deleteDoc(doc(db, "balancos", ja.id)); }
         try { await addDoc(collection(db, "balancos"), { mesAno: chave, valor: total, fechadoEm: new Date() }); location.reload(); } catch (e) { alert("Erro: " + e.message); }
     };
 
@@ -447,7 +430,7 @@
                 const m = t.descricao.match(/\(([^)]+)\)/);
                 if (m) {
                     const h = document.createElement('div'); h.className = 'lista-header'; 
-                    h.innerHTML = `<span>LISTA: ${t.descricao.split('(')[0].trim()}</span><button class="btn-edit-lista" onclick="prepararEdicaoLista('${t.id}')">✏️ Editar Itens</button>`; 
+                    h.innerHTML = `<span>LISTA: ${t.descricao.split('(')[0].trim()}</span><button class="btn-edit-lista" onclick="prepararEdicaoLista('${t.id}')">✏️</button>`; 
                     lista.appendChild(h);
                     m[1].split(',').map(i => i.trim()).forEach((item, idx) => {
                         const div = document.createElement('div'), ok = t.statusItens && t.statusItens[idx], cor = coresBlink[t.categoria] || '#eee';
@@ -495,30 +478,17 @@
         });
     };
 
-    window.prepararEdicaoLista = (id) => {
-        const t = tarefasGlobais.find(x => x.id === id); 
-        const m = t.descricao.match(/\(([^)]+)\)/);
-        if(m) {
-            idEdicao = id; mudarAba('planejamento');
-            document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
-            document.getElementById('inputSubItens').value = m[1];
-            document.getElementById('selectCategoria').value = t.categoria;
-            document.getElementById('inputData').value = t.dataLimite;
-            document.getElementById('btnSalvar').innerText = "Atualizar Itens";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
-
     window.btnSalvarClick = async () => {
         const dBase = document.getElementById('inputTarefa').value.trim(), subRaw = document.getElementById('inputSubItens').value.trim();
         let cStr = document.getElementById('inputCusto').value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
-        const custo = parseFloat(cStr) || 0, dataIni = document.getElementById('inputData').value, hora = document.getElementById('inputHora').value, cat = document.getElementById('selectCategoria').value, rec = document.getElementById('selectRecorrencia').value;
+        const valorDigitado = parseFloat(cStr) || 0, dataIni = document.getElementById('inputData').value, hora = document.getElementById('inputHora').value, cat = document.getElementById('selectCategoria').value, rec = document.getElementById('selectRecorrencia').value;
         const parcelas = parseInt(document.getElementById('inputParcelas').value) || 1;
         if ((!dBase && !subRaw) || !dataIni) return alert("Preencha descrição e data!");
         let dFinal = dBase || cat;
         if (subRaw !== "") dFinal += ` (${subRaw})`;
+        const custoPorParcela = valorDigitado / parcelas;
         if (idEdicao) {
-            await updateDoc(doc(db, "tarefas", idEdicao), { descricao: dFinal, custo, dataLimite: dataIni, hora, categoria: cat, recorrencia: rec });
+            await updateDoc(doc(db, "tarefas", idEdicao), { descricao: dFinal, custo: valorDigitado, dataLimite: dataIni, hora, categoria: cat, recorrencia: rec });
             idEdicao = null; document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
         } else {
             for (let i = 0; i < parcelas; i++) {
@@ -527,14 +497,16 @@
                 const dataFmt = dParcela.toISOString().split('T')[0];
                 const dP = parcelas > 1 ? `${dFinal} (${i + 1}/${parcelas})` : dFinal;
                 await addDoc(collection(db, "tarefas"), { 
-                    descricao: dP, custo, dataLimite: dataFmt, hora, categoria: cat, 
-                    recorrencia: parcelas > 1 ? "MENSAL" : rec, 
+                    descricao: dP, custo: custoPorParcela, dataLimite: dataFmt, 
+                    hora, categoria: cat, recorrencia: parcelas > 1 ? "MENSAL" : rec, 
                     concluida: false, criadoEm: new Date(), statusItens: {} 
                 });
             }
         }
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = ""; document.getElementById('inputParcelas').value = "";
         resetarCamposTempo();
+        // SALTO AUTOMÁTICO: Se for categoria CARTÃO, pula para a aba Faturas
+        if (cat === "CARTÃO") { mudarAba('faturas'); }
     };
     document.getElementById('btnSalvar').onclick = window.btnSalvarClick;
 
@@ -554,8 +526,8 @@
             else if (t.recorrencia === "SEMANAL") dS.setDate(dS.getDate() + 7);
             else if (t.recorrencia === "MENSAL") dS.setMonth(dS.getMonth() + 1);
             const dBR = `${String(dS.getDate()).padStart(2,'0')}/${String(dS.getMonth()+1).padStart(2,'0')}/${dS.getFullYear()}`;
-            const eD = prompt(`Data da PRÓXIMA?`, dBR); if (eD === null) return;
-            const eV = prompt(`Valor REAL?`, t.custo.toFixed(2).replace('.', ',')); if (eV === null) return;
+            const eD = prompt(`Próxima?`, dBR); if (eD === null) return;
+            const eV = prompt(`Valor?`, t.custo.toFixed(2).replace('.', ',')); if (eV === null) return;
             const p = eD.split('/'); const dSys = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
             const vP = parseFloat(eV.replace(/\./g, "").replace(",", ".")) || 0;
             const cH = { ...t, custo: vP, concluida: true, criadoEm: new Date() }; delete cH.id; delete cH.recorrencia; 
@@ -575,7 +547,7 @@
         const iC = document.getElementById('inputCusto'); iC.value = t.custo.toFixed(2).replace(".", ","); mascaraDinheiro(iC);
         document.getElementById('inputData').value = t.dataLimite; document.getElementById('inputHora').value = t.hora || "";
         document.getElementById('selectCategoria').value = t.categoria; document.getElementById('selectRecorrencia').value = t.recorrencia || "NENHUMA";
-        document.getElementById('btnSalvar').innerText = "Atualizar Tarefa"; window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('btnSalvar').innerText = "Atualizar"; window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.atualizarAdmin = () => {
@@ -591,7 +563,7 @@
             } 
         });
         const sB = [...balancosPermanentes].sort((a,b) => (b.fechadoEm?.seconds || 0) - (a.fechadoEm?.seconds || 0));
-        document.getElementById('labelMesSelecionado').innerText = `Total ${mN[parseInt(mS)-1].toUpperCase()} / ${aS}`;
+        document.getElementById('labelMesSelecionado').innerText = `${mN[parseInt(mS)-1].toUpperCase()}/${aS}`;
         document.getElementById('lastClosedValue').innerText = `R$ ${(sB[0]?.valor || 0).toFixed(2)}`;
         document.getElementById('currentMonthActive').innerText = `R$ ${tS.toFixed(2)}`;
         document.getElementById('totalTasks').innerText = tarefasGlobais.length;
@@ -616,8 +588,7 @@
     window.exportarBackup = () => { 
         const pack = { tarefas: tarefasGlobais, balancos: balancosPermanentes, exportadoEm: new Date() };
         const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pack, null, 2)); 
-        const d = new Date(); const nA = `Gestão familiar - ${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}.json`;
-        const a = document.createElement('a'); a.setAttribute("href", ds); a.setAttribute("download", nA); a.click(); 
+        const a = document.createElement('a'); a.setAttribute("href", ds); a.setAttribute("download", `Backup-Gestao.json`); a.click(); 
     };
 
     window.importarBackup = (event) => {
@@ -626,14 +597,14 @@
         r.onload = async (e) => {
             try {
                 const d = JSON.parse(e.target.result);
-                if (confirm(`Restaurar backup?`)) {
+                if (confirm(`Restaurar?`)) {
                     const snapT = await getDocs(collection(db, "tarefas")); await Promise.all(snapT.docs.map(i => deleteDoc(doc(db, "tarefas", i.id))));
                     const snapB = await getDocs(collection(db, "balancos")); await Promise.all(snapB.docs.map(i => deleteDoc(doc(db, "balancos", i.id))));
                     for (const i of (d.tarefas || [])) { const n = { ...i }; delete n.id; if (n.criadoEm?.seconds) n.criadoEm = new Date(n.criadoEm.seconds * 1000); await addDoc(collection(db, "tarefas"), n); }
                     for (const i of (d.balancos || [])) { const n = { ...i }; delete n.id; if (n.fechadoEm?.seconds) n.fechadoEm = new Date(n.fechadoEm.seconds * 1000); await addDoc(collection(db, "balancos"), n); }
                     location.reload();
                 }
-            } catch (err) { alert("Erro no backup."); }
+            } catch (err) { alert("Erro."); }
         };
         r.readAsText(f);
     };
