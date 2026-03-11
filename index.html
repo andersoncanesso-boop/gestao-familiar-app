@@ -489,35 +489,38 @@
         let dFinal = dBase || cat;
         if (subRaw !== "") dFinal += ` (${subRaw})`;
         
-        // CORREÇÃO: Divide o valor total pelo número de parcelas
-        const custoIndividual = valorDigitado / parcelas;
+        const custoIndiv = valorDigitado / parcelas;
 
         if (idEdicao) {
             await updateDoc(doc(db, "tarefas", idEdicao), { descricao: dFinal, custo: valorDigitado, dataLimite: dataIni, hora, categoria: cat, recorrencia: rec });
-            idEdicao = null; document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
+            idEdicao = null; 
+            document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
+            
+            // NAVEGAÇÃO AUTOMÁTICA AO EDITAR
+            if (cat === "CARTÃO") mudarAba('faturas');
+            else if (valorDigitado > 0) mudarAba('cronograma');
+            else mudarAba('tarefas');
+
         } else {
-            // Salva cada parcela
             for (let i = 0; i < parcelas; i++) {
-                let dParcela = new Date(dataIni + 'T12:00:00');
-                dParcela.setMonth(dParcela.getMonth() + i);
-                const dataFmt = dParcela.toISOString().split('T')[0];
-                
-                // CORREÇÃO: Garante que a descrição mostre (1/2), (2/2) etc.
-                const dP = parcelas > 1 ? `${dFinal} (${i + 1}/${parcelas})` : dFinal;
+                let dP = new Date(dataIni + 'T12:00:00');
+                dP.setMonth(dP.getMonth() + i);
+                const dataFmt = dP.toISOString().split('T')[0];
+                const dPDesc = parcelas > 1 ? `${dFinal} (${i + 1}/${parcelas})` : dFinal;
                 
                 await addDoc(collection(db, "tarefas"), { 
-                    descricao: dP, 
-                    custo: custoIndividual, 
-                    dataLimite: dataFmt, 
-                    hora, 
-                    categoria: cat, 
-                    recorrencia: parcelas > 1 ? "MENSAL" : rec, 
+                    descricao: dPDesc, custo: custoIndiv, dataLimite: dataFmt, 
+                    hora, categoria: cat, recorrencia: parcelas > 1 ? "MENSAL" : rec, 
                     concluida: false, criadoEm: new Date(), statusItens: {} 
                 });
             }
-            // CORREÇÃO: Salto para aba faturas no final do loop
-            if (cat === "CARTÃO") { mudarAba('faturas'); }
+            
+            // NAVEGAÇÃO AUTOMÁTICA AO SALVAR NOVO
+            if (cat === "CARTÃO") mudarAba('faturas');
+            else if (valorDigitado > 0) mudarAba('cronograma');
+            else mudarAba('tarefas');
         }
+        
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = ""; document.getElementById('inputParcelas').value = "";
         resetarCamposTempo();
     };
