@@ -80,6 +80,14 @@
         .task-meta { font-size: 0.7rem; color: #9ca3af; display: block; margin-top: 2px; }
         .task-cost { font-weight: 800; color: #059669; }
 
+        /* Estilo para o Painel de Fatura */
+        .fatura-header {
+            background: linear-gradient(135deg, #4338ca, #6366f1);
+            color: white; padding: 20px; border-radius: 22px; margin-bottom: 15px;
+            text-align: center; box-shadow: var(--shadow);
+        }
+        .fatura-valor { font-size: 1.8rem; font-weight: 900; display: block; }
+
         .lista-header { 
             font-size: 0.65rem; font-weight: 900; color: #64748b; margin: 15px 0 10px 5px; 
             text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--primary); 
@@ -148,6 +156,7 @@
             <button class="nav-btn active" id="btnPlan" onclick="mudarAba('planejamento')">Planejamento</button>
             <button class="nav-btn" id="btnT" onclick="mudarAba('tarefas')">Tarefas</button>
             <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Despesas</button>
+            <button class="nav-btn" id="btnF" onclick="mudarAba('faturas')">Faturas</button>
             <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Mercadorias</button>
             <button class="nav-btn" id="btnH" onclick="mudarAba('historico')">Histórico</button>
             <button class="nav-btn" id="btnA" onclick="mudarAba('admin')">Admin</button>
@@ -178,6 +187,7 @@
                         <option value="GERAL">📂 GERAL</option>
                         <option value="ALIMENTAÇÃO">🧑‍🍳 ALIMENTAÇÃO</option>
                         <option value="MERCADO">🛒 MERCADO</option>
+                        <option value="CARTÃO">💳 CARTÃO DE CRÉDITO</option>
                         <option value="CARRO">🚗 CARRO</option>
                         <option value="IGREJA">⛪ IGREJA/PASCOM</option>
                         <option value="EDUCAÇÃO">📚 EDUCAÇÃO</option>
@@ -197,8 +207,11 @@
                     </select>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" id="inputCusto" placeholder="R$ 0,00" style="flex:1;" oninput="mascaraDinheiro(this)">
-                    <input type="date" id="inputData" style="flex:1;">
+                    <input type="text" id="inputCusto" placeholder="R$ 0,00" style="flex:1.5;" oninput="mascaraDinheiro(this)">
+                    <input type="number" id="inputParcelas" placeholder="Parcelas (Ex: 10)" style="flex:1;" min="1" max="60">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input type="date" id="inputData" style="flex:1.5;">
                     <input type="time" id="inputHora" style="flex:1;">
                 </div>
                 <button id="btnSalvar">Adicionar Tarefa</button>
@@ -232,6 +245,7 @@
                             <option value="GERAL">📂 GERAL</option>
                             <option value="ALIMENTAÇÃO">🧑‍🍳 ALIMENTAÇÃO</option>
                             <option value="MERCADO">🛒 MERCADO</option>
+                            <option value="CARTÃO">💳 CARTÃO</option>
                             <option value="CARRO">🚗 CARRO</option>
                             <option value="IGREJA">⛪ IGREJA/PASCOM</option>
                             <option value="EDUCAÇÃO">📚 EDUCAÇÃO</option>
@@ -244,6 +258,29 @@
                             <option value="FÉRIAS">🌴 FÉRIAS</option>
                         </select>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="areaFaturas" class="hidden">
+            <div class="fatura-header">
+                <span style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase;">Total da Fatura</span>
+                <span class="fatura-valor" id="valorTotalFatura">R$ 0,00</span>
+            </div>
+            
+            <div class="filter-section">
+                <span class="filter-label">Consultar Outros Meses</span>
+                <div style="display:flex; gap:10px;">
+                    <select id="filtroMesFatura" class="filter-select-hist" onchange="renderizar()" style="flex:1;">
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                    <select id="filtroAnoFatura" class="filter-select-hist" onchange="renderizar()" style="flex:1;">
+                    </select>
                 </div>
             </div>
         </div>
@@ -310,7 +347,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithPopup, onAuthStateChanged, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = { 
@@ -329,15 +366,15 @@
 
     let tarefasGlobais = [], balancosPermanentes = [], abaAtiva = "planejamento", idEdicao = null;
     let chartM, chartC, chartA;
-    const coresBlink = { GERAL: '#f1f5f9', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
+    const coresBlink = { GERAL: '#f1f5f9', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARTÃO: '#fae8ff', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
     const popularAnos = () => {
         const anoAtual = new Date().getFullYear();
-        const selects = [document.getElementById('filtroAnoHist'), document.getElementById('adminFiltroAno')];
+        const selects = [document.getElementById('filtroAnoHist'), document.getElementById('adminFiltroAno'), document.getElementById('filtroAnoFatura')];
         selects.forEach(sel => {
             if (!sel) return;
             sel.innerHTML = "";
-            for (let i = 2026; i <= anoAtual + 5; i++) {
+            for (let i = 2025; i <= anoAtual + 5; i++) {
                 const opt = document.createElement('option');
                 opt.value = i; opt.innerText = i;
                 if (i === anoAtual) opt.selected = true;
@@ -367,6 +404,7 @@
             document.getElementById('appHeader').classList.remove('hidden');
             const agora = new Date();
             document.getElementById('adminFiltroMes').value = String(agora.getMonth() + 1).padStart(2, '0');
+            document.getElementById('filtroMesFatura').value = String(agora.getMonth() + 1).padStart(2, '0');
             resetarCamposTempo();
             onSnapshot(query(collection(db, "tarefas"), orderBy("criadoEm", "desc")), snap => {
                 tarefasGlobais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -382,66 +420,39 @@
     window.fecharMes = async () => {
         const senha = prompt("Digite a senha de administrador para CONGELAR o mês:");
         if (senha !== "1972") return alert("Senha incorreta!");
-        
-        const mesSel = document.getElementById('adminFiltroMes').value;
-        const anoSel = document.getElementById('adminFiltroAno').value;
-        const chaveMesAno = `${mesSel}/${anoSel}`;
-
-        const tarefasMes = tarefasGlobais.filter(t => 
-            t.concluida && t.dataLimite.startsWith(`${anoSel}-${mesSel}`)
-        );
-        
-        const totalMes = tarefasMes.reduce((acc, t) => acc + (t.custo || 0), 0);
-        
-        if (totalMes === 0) return alert(`Não há gastos concluídos para fechar em ${chaveMesAno}.`);
-
-        const jaFechado = balancosPermanentes.find(b => b.mesAno === chaveMesAno);
-        if (jaFechado) {
-            if (!confirm(`Já existe um fechamento de R$ ${jaFechado.valor.toFixed(2)} para ${chaveMesAno}. Deseja atualizar com o novo valor de R$ ${totalMes.toFixed(2)}?`)) return;
-            await deleteDoc(doc(db, "balancos", jaFechado.id));
-        }
-
-        if (confirm(`Fechar mês ${chaveMesAno} com total de R$ ${totalMes.toFixed(2)}? AS TAREFAS SERÃO MANTIDAS NO HISTÓRICO.`)) {
-            try {
-                await addDoc(collection(db, "balancos"), { 
-                    mesAno: chaveMesAno, 
-                    valor: totalMes, 
-                    fechadoEm: new Date() 
-                });
-                alert(`Mês ${chaveMesAno} fechado e registrado com sucesso!`);
-                location.reload();
-            } catch (e) { alert("Erro: " + e.message); }
-        }
+        const mesS = document.getElementById('adminFiltroMes').value, anoS = document.getElementById('adminFiltroAno').value;
+        const chave = `${mesS}/${anoS}`;
+        const tMes = tarefasGlobais.filter(t => t.concluida && t.dataLimite.startsWith(`${anoS}-${mesS}`));
+        const total = tMes.reduce((acc, t) => acc + (t.custo || 0), 0);
+        if (total === 0) return alert(`Nada para fechar em ${chave}.`);
+        const ja = balancosPermanentes.find(b => b.mesAno === chave);
+        if (ja) { if (!confirm(`Atualizar fechamento existente?`)) return; await deleteDoc(doc(db, "balancos", ja.id)); }
+        try { await addDoc(collection(db, "balancos"), { mesAno: chave, valor: total, fechadoEm: new Date() }); location.reload(); } catch (e) { alert("Erro: " + e.message); }
     };
 
     window.renderizar = () => {
-        const lista = document.getElementById('listaPrincipal'), areaForm = document.getElementById('areaForm'), areaAdmin = document.getElementById('areaAdmin'), areaFiltroH = document.getElementById('areaFiltroHistorico');
+        const lista = document.getElementById('listaPrincipal'), areaForm = document.getElementById('areaForm'), areaAdmin = document.getElementById('areaAdmin'), areaFiltroH = document.getElementById('areaFiltroHistorico'), areaFaturas = document.getElementById('areaFaturas');
         lista.innerHTML = "";
-        areaAdmin.classList.add('hidden'); areaForm.classList.add('hidden'); areaFiltroH.classList.add('hidden'); lista.classList.remove('hidden');
+        areaAdmin.classList.add('hidden'); areaForm.classList.add('hidden'); areaFiltroH.classList.add('hidden'); areaFaturas.classList.add('hidden'); lista.classList.remove('hidden');
         if (abaAtiva === 'admin') { areaAdmin.classList.remove('hidden'); lista.classList.add('hidden'); window.atualizarAdmin(); return; }
-        
         if (abaAtiva === 'planejamento') areaForm.classList.remove('hidden');
-        
         if (abaAtiva === 'historico') areaFiltroH.classList.remove('hidden');
-        const hoje = new Date();
-        const hojeStr = hoje.toLocaleDateString('sv-SE');
-        const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
-        const anoAtual = hoje.getFullYear();
+        if (abaAtiva === 'faturas') areaFaturas.classList.remove('hidden');
 
+        const hoje = new Date(), hojeStr = hoje.toLocaleDateString('sv-SE'), mesAt = String(hoje.getMonth() + 1).padStart(2, '0'), anoAt = hoje.getFullYear();
         let filtradas = [];
+
         if (abaAtiva === 'itens') {
             tarefasGlobais.filter(t => !t.concluida).forEach(t => {
                 const m = t.descricao.match(/\(([^)]+)\)/);
                 if (m) {
                     const h = document.createElement('div'); h.className = 'lista-header'; 
-                    h.innerHTML = `<span>LISTA: ${t.descricao.split('(')[0].trim()}</span>
-                                  <button class="btn-edit-lista" onclick="prepararEdicaoLista('${t.id}')">✏️ Editar Itens</button>`; 
+                    h.innerHTML = `<span>LISTA: ${t.descricao.split('(')[0].trim()}</span><button class="btn-edit-lista" onclick="prepararEdicaoLista('${t.id}')">✏️ Editar Itens</button>`; 
                     lista.appendChild(h);
-                    m[1].split(',').map(i => i.trim()).filter(i => i !== "").forEach((item, idx) => {
+                    m[1].split(',').map(i => i.trim()).forEach((item, idx) => {
                         const div = document.createElement('div'), ok = t.statusItens && t.statusItens[idx], cor = coresBlink[t.categoria] || '#eee';
                         div.className = `item-card`; div.style.borderLeftColor = cor;
-                        div.innerHTML = `<input type="checkbox" ${ok?'checked':''} onchange="toggleSubItem('${t.id}',${idx},this.checked)" style="transform:scale(1.3)">
-                            <div class="item-text-area"><span>${item}</span><span class="item-badge" style="background:${cor}">${t.categoria}</span></div>`;
+                        div.innerHTML = `<input type="checkbox" ${ok?'checked':''} onchange="toggleSubItem('${t.id}',${idx},this.checked)" style="transform:scale(1.3)"><div class="item-text-area"><span>${item}</span><span class="item-badge" style="background:${cor}">${t.categoria}</span></div>`;
                         lista.appendChild(div);
                     });
                 }
@@ -449,46 +460,34 @@
             return;
         } 
         
-        if (abaAtiva === 'planejamento') {
-            filtradas = tarefasGlobais.filter(t => !t.concluida && (!t.recorrencia || t.recorrencia === "NENHUMA"));
-        } else if (abaAtiva === 'tarefas') {
-            filtradas = tarefasGlobais.filter(t => !t.concluida && t.recorrencia && t.recorrencia !== "NENHUMA" && (t.custo === 0 || !t.custo));
-        } else if (abaAtiva === 'cronograma') {
-            filtradas = tarefasGlobais.filter(t => !t.concluida && t.recorrencia && t.recorrencia !== "NENHUMA" && t.custo > 0);
+        if (abaAtiva === 'planejamento') filtradas = tarefasGlobais.filter(t => !t.concluida && t.categoria !== 'CARTÃO' && (!t.recorrencia || t.recorrencia === "NENHUMA"));
+        else if (abaAtiva === 'tarefas') filtradas = tarefasGlobais.filter(t => !t.concluida && t.categoria !== 'CARTÃO' && t.recorrencia && t.recorrencia !== "NENHUMA" && (t.custo === 0 || !t.custo));
+        else if (abaAtiva === 'cronograma') filtradas = tarefasGlobais.filter(t => !t.concluida && t.categoria !== 'CARTÃO' && t.recorrencia && t.recorrencia !== "NENHUMA" && t.custo > 0);
+        else if (abaAtiva === 'faturas') {
+            const mF = document.getElementById('filtroMesFatura').value, aF = document.getElementById('filtroAnoFatura').value;
+            filtradas = tarefasGlobais.filter(t => !t.concluida && t.categoria === 'CARTÃO' && t.dataLimite.startsWith(`${aF}-${mF}`));
+            const totalF = filtradas.reduce((acc, t) => acc + (t.custo || 0), 0);
+            document.getElementById('valorTotalFatura').innerText = `R$ ${totalF.toFixed(2)}`;
         } else if (abaAtiva === 'historico') {
-            const anoFiltro = document.getElementById('filtroAnoHist').value;
-            const mesFiltro = document.getElementById('filtroMesHist').value;
-            const catFiltro = document.getElementById('filtroCategoriaHist').value;
-            filtradas = tarefasGlobais.filter(t => {
-                const [ano, mes] = t.dataLimite.split('-');
-                const bateAno = ano === anoFiltro;
-                const bateMes = mesFiltro === "TODOS" || mes === mesFiltro;
-                const bateCat = catFiltro === "TODAS" || t.categoria === catFiltro;
-                return t.concluida && bateAno && bateMes && bateCat;
-            });
+            const aF = document.getElementById('filtroAnoHist').value, mF = document.getElementById('filtroMesHist').value, cF = document.getElementById('filtroCategoriaHist').value;
+            filtradas = tarefasGlobais.filter(t => t.concluida && t.dataLimite.startsWith(aF) && (mF === 'TODOS' || t.dataLimite.includes(`-${mF}-`)) && (cF === 'TODAS' || t.categoria === cF));
             filtradas.sort((a, b) => b.dataLimite.localeCompare(a.dataLimite));
         }
 
-        if (abaAtiva !== 'historico') {
-             filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
-        }
+        if (abaAtiva !== 'historico') filtradas.sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
 
         filtradas.forEach(t => {
             const div = document.createElement('div'), cor = coresBlink[t.categoria] || '#ffffff';
-            const venceHoje = t.dataLimite === hojeStr && !t.concluida;
-            const atrasada = t.dataLimite < hojeStr && !t.concluida;
-            const [tAno, tMes] = t.dataLimite.split('-');
-            const ehMesAtual = tMes === mesAtual && tAno === String(anoAtual);
-            let classeExtra = "", rotuloAlerta = "";
-            if (venceHoje) { classeExtra = "card-vence-hoje"; rotuloAlerta = '<span class="alert-icon-hoje">⚠️ VENCE HOJE</span>'; }
-            else if (atrasada) { classeExtra = "card-atrasada"; rotuloAlerta = '<span class="alert-icon-atrasado">🚨 ATRASADA</span>'; }
-            else if ((abaAtiva === 'cronograma' || abaAtiva === 'tarefas') && ehMesAtual) { classeExtra = "card-mes-atual"; }
-            else if (t.descricao.includes('(') && !t.concluida) { classeExtra = "card-blink"; }
+            const venceH = t.dataLimite === hojeStr && !t.concluida, atras = t.dataLimite < hojeStr && !t.concluida;
+            const ehAtu = t.dataLimite.startsWith(`${anoAt}-${mesAt}`);
+            let classeExtra = "", rotAlerta = "";
+            if (venceH) { classeExtra = "card-vence-hoje"; rotAlerta = '<span class="alert-icon-hoje">⚠️ VENCE HOJE</span>'; }
+            else if (atras) { classeExtra = "card-atrasada"; rotAlerta = '<span class="alert-icon-atrasado">🚨 ATRASADA</span>'; }
+            else if (ehAtu && (abaAtiva === 'cronograma' || abaAtiva === 'tarefas')) classeExtra = "card-mes-atual";
             
             div.style.setProperty('--blink-color', cor); div.className = `tarefa-card ${classeExtra}`;
             div.innerHTML = `<div class="check-area ${t.concluida?'done':''}" onclick="toggleCheck('${t.id}', ${t.concluida})">${t.concluida?'✓':''}</div>
-                <div class="info-area"><span class="cat-badge">${t.categoria}</span>
-                <span class="task-name">${t.descricao.split('(')[0]} ${rotuloAlerta}</span>
+                <div class="info-area"><span class="cat-badge">${t.categoria}</span><span class="task-name">${t.descricao.split('(')[0]} ${rotAlerta}</span>
                 <span class="task-meta">📅 ${t.dataLimite.split('-').reverse().join('/')} às ${t.hora || '--:--'} ${t.recorrencia ? `(${t.recorrencia})` : ''}</span>
                 ${t.custo > 0 ? `<span class="task-meta task-cost">R$ ${t.custo.toFixed(2)}</span>` : ''}</div>
                 <div class="action-btns"><button class="btn-icon" onclick="prepararEdicao('${t.id}')">✏️</button><button class="btn-icon" onclick="exterminar('${t.id}')">🗑️</button></div>`;
@@ -500,8 +499,7 @@
         const t = tarefasGlobais.find(x => x.id === id); 
         const m = t.descricao.match(/\(([^)]+)\)/);
         if(m) {
-            idEdicao = id;
-            mudarAba('planejamento');
+            idEdicao = id; mudarAba('planejamento');
             document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
             document.getElementById('inputSubItens').value = m[1];
             document.getElementById('selectCategoria').value = t.categoria;
@@ -512,202 +510,132 @@
     };
 
     window.btnSalvarClick = async () => {
-        const descBase = document.getElementById('inputTarefa').value.trim(), subItensRaw = document.getElementById('inputSubItens').value.trim();
-        let custoStr = document.getElementById('inputCusto').value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
-        const custo = parseFloat(custoStr) || 0, data = document.getElementById('inputData').value, hora = document.getElementById('inputHora').value, cat = document.getElementById('selectCategoria').value, rec = document.getElementById('selectRecorrencia').value;
-        if ((!descBase && !subItensRaw) || !data) return alert("Preencha descrição e data!");
-        let descFinal = descBase || cat;
-        if (subItensRaw !== "") descFinal += ` (${subItensRaw})`;
-        const dados = { 
-            descricao: descFinal, 
-            custo, 
-            dataLimite: data, 
-            hora, 
-            categoria: cat, 
-            recorrencia: rec, 
-            concluida: false, 
-            criadoEm: new Date(), 
-            statusItens: idEdicao ? (tarefasGlobais.find(x=>x.id===idEdicao).statusItens || {}) : {} 
-        };
-        if (idEdicao) { await updateDoc(doc(db, "tarefas", idEdicao), dados); idEdicao = null; document.getElementById('btnSalvar').innerText = "Adicionar Tarefa"; }
-        else { await addDoc(collection(db, "tarefas"), dados); }
-        document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = "";
+        const dBase = document.getElementById('inputTarefa').value.trim(), subRaw = document.getElementById('inputSubItens').value.trim();
+        let cStr = document.getElementById('inputCusto').value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
+        const custo = parseFloat(cStr) || 0, dataIni = document.getElementById('inputData').value, hora = document.getElementById('inputHora').value, cat = document.getElementById('selectCategoria').value, rec = document.getElementById('selectRecorrencia').value;
+        const parcelas = parseInt(document.getElementById('inputParcelas').value) || 1;
+        if ((!dBase && !subRaw) || !dataIni) return alert("Preencha descrição e data!");
+        let dFinal = dBase || cat;
+        if (subRaw !== "") dFinal += ` (${subRaw})`;
+        if (idEdicao) {
+            await updateDoc(doc(db, "tarefas", idEdicao), { descricao: dFinal, custo, dataLimite: dataIni, hora, categoria: cat, recorrencia: rec });
+            idEdicao = null; document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
+        } else {
+            for (let i = 0; i < parcelas; i++) {
+                let dParcela = new Date(dataIni + 'T12:00:00');
+                dParcela.setMonth(dParcela.getMonth() + i);
+                const dataFmt = dParcela.toISOString().split('T')[0];
+                const dP = parcelas > 1 ? `${dFinal} (${i + 1}/${parcelas})` : dFinal;
+                await addDoc(collection(db, "tarefas"), { 
+                    descricao: dP, custo, dataLimite: dataFmt, hora, categoria: cat, 
+                    recorrencia: parcelas > 1 ? "MENSAL" : rec, 
+                    concluida: false, criadoEm: new Date(), statusItens: {} 
+                });
+            }
+        }
+        document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = ""; document.getElementById('inputParcelas').value = "";
         resetarCamposTempo();
     };
     document.getElementById('btnSalvar').onclick = window.btnSalvarClick;
 
     window.mudarAba = (aba) => {
         abaAtiva = aba; document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        const btns = { planejamento: 'btnPlan', tarefas: 'btnT', cronograma: 'btnC', itens: 'btnI', historico: 'btnH', admin: 'btnA' };
+        const btns = { planejamento: 'btnPlan', tarefas: 'btnT', cronograma: 'btnC', faturas: 'btnF', itens: 'btnI', historico: 'btnH', admin: 'btnA' };
         document.getElementById(btns[aba]).classList.add('active'); renderizar();
     };
 
-    window.toggleCheck = async (id, statusAtual) => {
-        const t = tarefasGlobais.find(x => x.id === id);
-        if (!t) return;
-        if (!t.recorrencia || t.recorrencia === "NENHUMA") {
-            await updateDoc(doc(db, "tarefas", id), { concluida: !statusAtual });
-        } else {
-            if (!statusAtual) {
-                let dataSugerida = new Date(t.dataLimite + 'T12:00:00');
-                if (t.recorrencia === "DIÁRIA") dataSugerida.setDate(dataSugerida.getDate() + 1);
-                else if (t.recorrencia === "SEMANAL") dataSugerida.setDate(dataSugerida.getDate() + 7);
-                else if (t.recorrencia === "MENSAL") dataSugerida.setMonth(dataSugerida.getMonth() + 1);
-                const diaSug = String(dataSugerida.getDate()).padStart(2, '0');
-                const mesSug = String(dataSugerida.getMonth() + 1).padStart(2, '0');
-                const anoSug = dataSugerida.getFullYear();
-                const dataSugeridaBR = `${diaSug}/${mesSug}/${anoSug}`;
-                const entradaData = prompt(`[AGENDAMENTO] Para quando é a PRÓXIMA?\nFormato: DD/MM/AAAA`, dataSugeridaBR);
-                if (entradaData === null) return;
-                const valorAtualBR = t.custo.toFixed(2).replace('.', ',');
-                const entradaValor = prompt(`[VALOR PAGO] Qual foi o valor real pago desta vez?`, valorAtualBR);
-                if (entradaValor === null) return;
-                const partes = entradaData.split('/');
-                if (partes.length !== 3) return alert("Data inválida!");
-                const dataFormatadaSistema = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-                const valorPagoFinal = parseFloat(entradaValor.replace(/\./g, "").replace(",", ".")) || 0;
-                const copiaHistorico = { ...t, custo: valorPagoFinal, concluida: true, criadoEm: new Date() };
-                delete copiaHistorico.id; delete copiaHistorico.recorrencia; 
-                await addDoc(collection(db, "tarefas"), copiaHistorico);
-                await updateDoc(doc(db, "tarefas", id), { dataLimite: dataFormatadaSistema, concluida: false, statusItens: {} });
-            } else {
-                await updateDoc(doc(db, "tarefas", id), { concluida: !statusAtual });
-            }
-        }
+    window.toggleCheck = async (id, stAtu) => {
+        const t = tarefasGlobais.find(x => x.id === id); if (!t) return;
+        if (!t.recorrencia || t.recorrencia === "NENHUMA" || t.descricao.includes('/')) { 
+            await updateDoc(doc(db, "tarefas", id), { concluida: !stAtu });
+        } else if (!stAtu) {
+            let dS = new Date(t.dataLimite + 'T12:00:00');
+            if (t.recorrencia === "DIÁRIA") dS.setDate(dS.getDate() + 1);
+            else if (t.recorrencia === "SEMANAL") dS.setDate(dS.getDate() + 7);
+            else if (t.recorrencia === "MENSAL") dS.setMonth(dS.getMonth() + 1);
+            const dBR = `${String(dS.getDate()).padStart(2,'0')}/${String(dS.getMonth()+1).padStart(2,'0')}/${dS.getFullYear()}`;
+            const eD = prompt(`Data da PRÓXIMA?`, dBR); if (eD === null) return;
+            const eV = prompt(`Valor REAL?`, t.custo.toFixed(2).replace('.', ',')); if (eV === null) return;
+            const p = eD.split('/'); const dSys = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+            const vP = parseFloat(eV.replace(/\./g, "").replace(",", ".")) || 0;
+            const cH = { ...t, custo: vP, concluida: true, criadoEm: new Date() }; delete cH.id; delete cH.recorrencia; 
+            await addDoc(collection(db, "tarefas"), cH);
+            await updateDoc(doc(db, "tarefas", id), { dataLimite: dSys, concluida: false, statusItens: {} });
+        } else { await updateDoc(doc(db, "tarefas", id), { concluida: !stAtu }); }
     };
 
     window.exterminar = async (id) => { if(confirm("Deletar?")) await deleteDoc(doc(db, "tarefas", id)); };
-    window.toggleSubItem = async (id, idx, st) => { 
-        const t = tarefasGlobais.find(x => x.id === id); 
-        let n = t.statusItens || {}; n[idx] = st; 
-        await updateDoc(doc(db, "tarefas", id), { statusItens: n }); 
-    };
+    window.toggleSubItem = async (id, idx, st) => { const t = tarefasGlobais.find(x => x.id === id); let n = t.statusItens || {}; n[idx] = st; await updateDoc(doc(db, "tarefas", id), { statusItens: n }); };
     window.fazerLogoff = () => signOut(auth).then(() => location.reload());
     document.getElementById('btnLogin').onclick = () => signInWithPopup(auth, provider);
 
     window.prepararEdicao = (id) => {
-        const t = tarefasGlobais.find(x => x.id === id); idEdicao = id;
-        mudarAba('planejamento');
+        const t = tarefasGlobais.find(x => x.id === id); idEdicao = id; mudarAba('planejamento');
         document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
-        const inputC = document.getElementById('inputCusto');
-        inputC.value = t.custo.toFixed(2).replace(".", ",");
-        mascaraDinheiro(inputC);
-        document.getElementById('inputData').value = t.dataLimite;
-        document.getElementById('inputHora').value = t.hora || "";
-        document.getElementById('selectCategoria').value = t.categoria; 
-        document.getElementById('selectRecorrencia').value = t.recorrencia || "NENHUMA";
-        document.getElementById('btnSalvar').innerText = "Atualizar Tarefa";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const iC = document.getElementById('inputCusto'); iC.value = t.custo.toFixed(2).replace(".", ","); mascaraDinheiro(iC);
+        document.getElementById('inputData').value = t.dataLimite; document.getElementById('inputHora').value = t.hora || "";
+        document.getElementById('selectCategoria').value = t.categoria; document.getElementById('selectRecorrencia').value = t.recorrencia || "NENHUMA";
+        document.getElementById('btnSalvar').innerText = "Atualizar Tarefa"; window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.atualizarAdmin = () => {
-        const mesSel = document.getElementById('adminFiltroMes').value, anoSel = document.getElementById('adminFiltroAno').value;
-        const cats = {}, meses = {}, anos = {}, mesesNomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-        let totalSelecionado = 0;
-        let totalGeralSomado = 0;
-        let totalAnoSomado = 0;
-
+        const mS = document.getElementById('adminFiltroMes').value, aS = document.getElementById('adminFiltroAno').value;
+        const cats = {}, meses = {}, anos = {}, mN = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+        let tS = 0, tG = 0, tA = 0;
         tarefasGlobais.forEach(t => { 
             if(t.custo > 0 && t.concluida) { 
-                const [ano, mes] = t.dataLimite.split('-'); 
-                const kMes = `${mesesNomes[parseInt(mes)-1]}/${ano}`; 
-                
-                meses[kMes] = (meses[kMes] || 0) + t.custo;
-                totalGeralSomado += t.custo;
-
-                if(ano === anoSel) {
-                    totalAnoSomado += t.custo;
-                    anos[ano] = (anos[ano] || 0) + t.custo;
-                }
-
-                if(mes === mesSel && ano === anoSel) {
-                    totalSelecionado += t.custo;
-                    cats[t.categoria] = (cats[t.categoria] || 0) + t.custo;
-                }
+                const [a, m] = t.dataLimite.split('-'); const kM = `${mN[parseInt(m)-1]}/${a}`; 
+                meses[kM] = (meses[kM] || 0) + t.custo; tG += t.custo;
+                if(a === aS) { tA += t.custo; anos[a] = (anos[a] || 0) + t.custo; }
+                if(m === mS && a === aS) { tS += t.custo; cats[t.categoria] = (cats[t.categoria] || 0) + t.custo; }
             } 
         });
-
-        const sortedB = [...balancosPermanentes].sort((a,b) => (b.fechadoEm?.seconds || 0) - (a.fechadoEm?.seconds || 0));
-        
-        document.getElementById('labelMesSelecionado').innerText = `Total ${mesesNomes[parseInt(mesSel)-1].toUpperCase()} / ${anoSel}`;
-        document.getElementById('lastClosedValue').innerText = `R$ ${(sortedB[0]?.valor || 0).toFixed(2)}`;
-        document.getElementById('currentMonthActive').innerText = `R$ ${totalSelecionado.toFixed(2)}`;
+        const sB = [...balancosPermanentes].sort((a,b) => (b.fechadoEm?.seconds || 0) - (a.fechadoEm?.seconds || 0));
+        document.getElementById('labelMesSelecionado').innerText = `Total ${mN[parseInt(mS)-1].toUpperCase()} / ${aS}`;
+        document.getElementById('lastClosedValue').innerText = `R$ ${(sB[0]?.valor || 0).toFixed(2)}`;
+        document.getElementById('currentMonthActive').innerText = `R$ ${tS.toFixed(2)}`;
         document.getElementById('totalTasks').innerText = tarefasGlobais.length;
-        document.getElementById('totalYearCost').innerText = `R$ ${totalAnoSomado.toFixed(2)}`;
-        document.getElementById('totalCost').innerText = `R$ ${totalGeralSomado.toFixed(2)}`;
-
-        const cCat = document.getElementById('listaCustosCategoria'); cCat.innerHTML = "";
-        Object.keys(cats).sort().forEach(c => { 
-            const d = document.createElement('div'); d.className = 'cat-cost-item'; 
-            d.innerHTML = `<span>${c}</span><span class="cat-cost-value">R$ ${cats[c].toFixed(2)}</span>`; cCat.appendChild(d); 
-        });
-
-        const cMes = document.getElementById('listaCustosMensais'); cMes.innerHTML = "";
-        Object.keys(meses).reverse().slice(0, 12).forEach(m => { 
-            const d = document.createElement('div'); d.className = 'cat-cost-item'; 
-            d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cMes.appendChild(d); 
-        });
-
+        document.getElementById('totalYearCost').innerText = `R$ ${tA.toFixed(2)}`;
+        document.getElementById('totalCost').innerText = `R$ ${tG.toFixed(2)}`;
+        const cC = document.getElementById('listaCustosCategoria'); cC.innerHTML = "";
+        Object.keys(cats).sort().forEach(c => { const d = document.createElement('div'); d.className = 'cat-cost-item'; d.innerHTML = `<span>${c}</span><span class="cat-cost-value">R$ ${cats[c].toFixed(2)}</span>`; cC.appendChild(d); });
+        const cM = document.getElementById('listaCustosMensais'); cM.innerHTML = "";
+        Object.keys(meses).reverse().slice(0, 12).forEach(m => { const d = document.createElement('div'); d.className = 'cat-cost-item'; d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cM.appendChild(d); });
         atualizarGraficos(meses, cats, anos);
     }
 
     function atualizarGraficos(dM, dC, dA) {
         if(chartM) chartM.destroy(); if(chartC) chartC.destroy(); if(chartA) chartA.destroy();
-        const coresCategorias = {
-            "GERAL": "#6366f1", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARRO": "#f44336",
-            "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63",
-            "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3"
-        };
-        const labelsC = Object.keys(dC);
-        const backgroundColorsC = labelsC.map(cat => coresCategorias[cat] || '#cbd5e1');
+        const cCat = { "GERAL": "#6366f1", "ALIMENTAÇÃO": "#fb8c00", "MERCADO": "#43a047", "CARTÃO": "#a855f7", "CARRO": "#f44336", "IGREJA": "#9c27b0", "EDUCAÇÃO": "#00bcd4", "FAXINA": "#455a64", "PET": "#e91e63", "MANUTENÇÃO": "#78909c", "SAÚDE": "#d32f2f", "CONTAS": "#009688", "LAZER": "#fdd835", "FÉRIAS": "#2196f3" };
+        const lC = Object.keys(dC);
         chartM = new Chart(document.getElementById('chartMensal'), { type: 'line', data: { labels: Object.keys(dM), datasets: [{ label: 'R$', data: Object.values(dM), borderColor: '#6366f1', fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3 }] } });
-        chartC = new Chart(document.getElementById('chartCategoria'), { type: 'doughnut', data: { labels: labelsC, datasets: [{ data: Object.values(dC), backgroundColor: backgroundColorsC }] } });
+        chartC = new Chart(document.getElementById('chartCategoria'), { type: 'doughnut', data: { labels: lC, datasets: [{ data: Object.values(dC), backgroundColor: lC.map(c => cCat[c] || '#cbd5e1') }] } });
         chartA = new Chart(document.getElementById('chartAnual'), { type: 'bar', data: { labels: Object.keys(dA), datasets: [{ label: 'Ano', data: Object.values(dA), backgroundColor: '#a855f7', borderRadius: 8 }] } });
     }
 
     window.exportarBackup = () => { 
         const pack = { tarefas: tarefasGlobais, balancos: balancosPermanentes, exportadoEm: new Date() };
         const ds = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pack, null, 2)); 
-        const d = new Date();
-        const dia = String(d.getDate()).padStart(2, '0');
-        const mes = String(d.getMonth() + 1).padStart(2, '0');
-        const ano = d.getFullYear();
-        const nomeArquivo = `Gestão familiar - ${dia}-${mes}-${ano}.json`;
-        const a = document.createElement('a'); 
-        a.setAttribute("href", ds); 
-        a.setAttribute("download", nomeArquivo); 
-        a.click(); 
+        const d = new Date(); const nA = `Gestão familiar - ${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}.json`;
+        const a = document.createElement('a'); a.setAttribute("href", ds); a.setAttribute("download", nA); a.click(); 
     };
 
     window.importarBackup = (event) => {
-        const file = event.target.files[0]; if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async (e) => {
+        const f = event.target.files[0]; if (!f) return;
+        const r = new FileReader();
+        r.onload = async (e) => {
             try {
-                const dados = JSON.parse(e.target.result);
-                const tParaRestaurar = dados.tarefas || [];
-                const bParaRestaurar = dados.balancos || [];
-                if (confirm(`Deseja restaurar o backup de "${file.name}"? Isso substituirá os dados atuais.`)) {
-                    const snapT = await getDocs(collection(db, "tarefas"));
-                    await Promise.all(snapT.docs.map(d => deleteDoc(doc(db, "tarefas", d.id))));
-                    const snapB = await getDocs(collection(db, "balancos"));
-                    await Promise.all(snapB.docs.map(d => deleteDoc(doc(db, "balancos", d.id))));
-                    for (const item of tParaRestaurar) {
-                        const nt = { ...item }; delete nt.id;
-                        if (nt.criadoEm?.seconds) nt.criadoEm = new Date(nt.criadoEm.seconds * 1000);
-                        await addDoc(collection(db, "tarefas"), nt);
-                    }
-                    for (const item of bParaRestaurar) {
-                        const nb = { ...item }; delete nb.id;
-                        if (nb.fechadoEm?.seconds) nb.fechadoEm = new Date(nb.fechadoEm.seconds * 1000);
-                        await addDoc(collection(db, "balancos"), nb);
-                    }
-                    alert("Backup restaurado com sucesso!");
+                const d = JSON.parse(e.target.result);
+                if (confirm(`Restaurar backup?`)) {
+                    const snapT = await getDocs(collection(db, "tarefas")); await Promise.all(snapT.docs.map(i => deleteDoc(doc(db, "tarefas", i.id))));
+                    const snapB = await getDocs(collection(db, "balancos")); await Promise.all(snapB.docs.map(i => deleteDoc(doc(db, "balancos", i.id))));
+                    for (const i of (d.tarefas || [])) { const n = { ...i }; delete n.id; if (n.criadoEm?.seconds) n.criadoEm = new Date(n.criadoEm.seconds * 1000); await addDoc(collection(db, "tarefas"), n); }
+                    for (const i of (d.balancos || [])) { const n = { ...i }; delete n.id; if (n.fechadoEm?.seconds) n.fechadoEm = new Date(n.fechadoEm.seconds * 1000); await addDoc(collection(db, "balancos"), n); }
                     location.reload();
                 }
-            } catch (err) { alert("Erro ao processar o arquivo de backup."); }
+            } catch (err) { alert("Erro no backup."); }
         };
-        reader.readAsText(file);
+        r.readAsText(f);
     };
 </script>
 </body>
