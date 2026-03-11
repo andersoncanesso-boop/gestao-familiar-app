@@ -56,9 +56,17 @@
 
         .container { width: 92%; max-width: 480px; margin: 15px auto; }
         .hidden { display: none !important; }
-        .form-card { background: white; padding: 20px; border-radius: 28px; margin-bottom: 25px; box-shadow: var(--shadow); }
+        .form-card { background: white; padding: 20px; border-radius: 28px; margin-bottom: 25px; box-shadow: var(--shadow); position: relative;}
         input, select, button#btnSalvar { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; }
         button#btnSalvar { background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; }
+
+        /* Estilo do Botão de Aviso de Mercadorias */
+        #avisoMercadoria { 
+            background: var(--accent); color: white; border: none; padding: 10px; border-radius: 10px; 
+            font-size: 0.75rem; font-weight: 800; cursor: pointer; width: 100%; margin-top: -5px; margin-bottom: 15px;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .tarefa-card { background: white; border-radius: 22px; padding: 16px; display: flex; align-items: center; margin-bottom: 12px; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid transparent; transition: 0.3s; }
         
@@ -214,6 +222,7 @@
                     <input type="time" id="inputHora" style="flex:1;">
                 </div>
                 <button id="btnSalvar">Adicionar Tarefa</button>
+                <button id="avisoMercadoria" class="hidden" onclick="mudarAba('itens')">🛒 Itens adicionados! Ver na aba Mercadorias</button>
             </div>
         </div>
 
@@ -503,8 +512,8 @@
             // LÓGICA DE SALTO AO EDITAR
             if (cat === "CARTÃO") mudarAba('faturas');
             else if (valorDigitado > 0 && rec !== "NENHUMA") mudarAba('cronograma');
-            else if (valorDigitado > 0 && rec === "NENHUMA") mudarAba('planejamento');
-            else mudarAba('tarefas');
+            else if (valorDigitado === 0) mudarAba('tarefas');
+            // Se tiver valor mas não for recorrente, permanece em Planejamento (Aba atual)
 
         } else {
             for (let i = 0; i < parcelas; i++) {
@@ -523,10 +532,17 @@
             // LÓGICA DE SALTO AO CRIAR NOVO
             if (cat === "CARTÃO") mudarAba('faturas');
             else if (valorDigitado > 0 && rec !== "NENHUMA") mudarAba('cronograma');
-            else if (valorDigitado > 0 && rec === "NENHUMA") mudarAba('planejamento');
-            else mudarAba('tarefas');
+            else if (valorDigitado === 0) mudarAba('tarefas');
+            // Se tiver valor mas não for recorrente, permanece em Planejamento (Aba atual)
         }
         
+        // MOSTRAR AVISO DE MERCADORIA SE HOUVER ITENS
+        if (subRaw !== "") {
+            const aviso = document.getElementById('avisoMercadoria');
+            aviso.classList.remove('hidden');
+            setTimeout(() => { aviso.classList.add('hidden'); }, 6000); // Some após 6 segundos
+        }
+
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = ""; document.getElementById('inputParcelas').value = "";
         resetarCamposTempo();
     };
