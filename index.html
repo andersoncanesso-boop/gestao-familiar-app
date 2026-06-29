@@ -552,7 +552,6 @@
         idEdicao = id;
         mudarAba('planejamento');
         document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
-        // Extrai itens entre parênteses
         const match = t.descricao.match(/\(([^)]+)\)/);
         document.getElementById('inputSubItens').value = match ? match[1] : "";
         document.getElementById('selectCategoria').value = t.categoria;
@@ -580,10 +579,14 @@
             idEdicao = null; 
             document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
             
+            // Navegação Editada
             if (subRaw !== "") mudarAba('itens');
             else if (cat === "CARTÃO") mudarAba('faturas');
-            else if (valorDigitado > 0 && rec !== "NENHUMA") mudarAba('cronograma');
-            else mudarAba('tarefas');
+            else if (rec !== "NENHUMA") {
+                if (valorDigitado > 0) mudarAba('cronograma');
+                else mudarAba('tarefas');
+            }
+            // Se "NENHUMA" e sem itens/cartão, fica no Planejamento.
 
         } else {
             for (let i = 0; i < parcelas; i++) {
@@ -599,10 +602,14 @@
                 });
             }
             
+            // Navegação Editada
             if (subRaw !== "") mudarAba('itens');
             else if (cat === "CARTÃO") mudarAba('faturas');
-            else if (valorDigitado > 0 && rec !== "NENHUMA") mudarAba('cronograma');
-            else mudarAba('tarefas');
+            else if (rec !== "NENHUMA") {
+                if (valorDigitado > 0) mudarAba('cronograma');
+                else mudarAba('tarefas');
+            }
+            // Se "NENHUMA" e sem itens/cartão, fica no Planejamento.
         }
         
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = ""; document.getElementById('inputParcelas').value = "";
@@ -676,7 +683,7 @@
         const cC = document.getElementById('listaCustosCategoria'); cC.innerHTML = "";
         Object.keys(cats).sort().forEach(c => { const d = document.createElement('div'); d.className = 'cat-cost-item'; d.innerHTML = `<span>${c}</span><span class="cat-cost-value">R$ ${cats[c].toFixed(2)}</span>`; cC.appendChild(d); });
         const cM = document.getElementById('listaCustosMensais'); cM.innerHTML = "";
-        Object.keys(meses).reverse().slice(0, 12).forEach(m => { const d = document.createElement('div'); d.className = 'cat-cost-item'; d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cM.appendChild(d); });
+        Object.keys(meses).reverse().slice(0, 12).forEach(m => { const d = document.createElement('div'); d.className = 'cat-cost-item'; d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cC.appendChild(d); });
         atualizarGraficos(meses, cats, anos);
     }
 
