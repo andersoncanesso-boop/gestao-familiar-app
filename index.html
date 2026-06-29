@@ -557,6 +557,8 @@
         if (subRaw !== "") dFinal += ` (${subRaw})`;
         
         const custoIndiv = valorDigitado / parcelas;
+        // Ajuste: Iniciar no próximo mês se for CARTÃO
+        const mesOffset = (cat === 'CARTÃO') ? 1 : 0;
 
         if (idEdicao) {
             await updateDoc(doc(db, "tarefas", idEdicao), { descricao: dFinal, custo: valorDigitado, dataLimite: dataIni, hora, categoria: cat, recorrencia: rec });
@@ -570,7 +572,7 @@
         } else {
             for (let i = 0; i < parcelas; i++) {
                 let dP = new Date(dataIni + 'T12:00:00');
-                dP.setMonth(dP.getMonth() + i);
+                dP.setMonth(dP.getMonth() + i + mesOffset);
                 const dataFmt = dP.toISOString().split('T')[0];
                 const dPDesc = parcelas > 1 ? `${dFinal} (${i + 1}/${parcelas})` : dFinal;
                 
