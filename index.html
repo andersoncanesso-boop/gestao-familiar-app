@@ -545,6 +545,22 @@
         });
     };
 
+    // FUNÇÃO EDITAR LISTA
+    window.prepararEdicaoLista = (id) => {
+        const t = tarefasGlobais.find(x => x.id === id);
+        if(!t) return;
+        idEdicao = id;
+        mudarAba('planejamento');
+        document.getElementById('inputTarefa').value = t.descricao.split('(')[0].trim();
+        // Extrai itens entre parênteses
+        const match = t.descricao.match(/\(([^)]+)\)/);
+        document.getElementById('inputSubItens').value = match ? match[1] : "";
+        document.getElementById('selectCategoria').value = t.categoria;
+        document.getElementById('selectRecorrencia').value = t.recorrencia || "NENHUMA";
+        document.getElementById('btnSalvar').innerText = "Atualizar Lista";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     window.btnSalvarClick = async () => {
         const dBase = document.getElementById('inputTarefa').value.trim(), subRaw = document.getElementById('inputSubItens').value.trim();
         let cStr = document.getElementById('inputCusto').value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
@@ -557,7 +573,6 @@
         if (subRaw !== "") dFinal += ` (${subRaw})`;
         
         const custoIndiv = valorDigitado / parcelas;
-        // Ajuste: Iniciar no próximo mês se for CARTÃO
         const mesOffset = (cat === 'CARTÃO') ? 1 : 0;
 
         if (idEdicao) {
@@ -603,10 +618,7 @@
         abaAtiva = aba; document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         const btns = { planejamento: 'btnPlan', tarefas: 'btnT', cronograma: 'btnC', faturas: 'btnF', itens: 'btnI', historico: 'btnH', admin: 'btnA' };
         document.getElementById(btns[aba]).classList.add('active'); 
-        
-        // Esconde o menu hamburger automaticamente no mobile ao selecionar uma aba
         document.getElementById('menuPills').classList.remove('show');
-        
         renderizar();
     };
 
@@ -624,10 +636,7 @@
             const eV = prompt(`Valor?`, t.custo.toFixed(2).replace('.', ',')); if (eV === null) return;
             const p = eD.split('/'); const dSys = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
             const vP = parseFloat(eV.replace(/\./g, "").replace(",", ".")) || 0;
-            
-            // ALTERAÇÃO: A data do histórico deve ser a data atual (do pagamento)
             const dataPagamentoAtual = new Date().toLocaleDateString('sv-SE');
-            
             const cH = { ...t, custo: vP, concluida: true, criadoEm: new Date(), dataLimite: dataPagamentoAtual }; 
             delete cH.id; delete cH.recorrencia; 
             await addDoc(collection(db, "tarefas"), cH);
