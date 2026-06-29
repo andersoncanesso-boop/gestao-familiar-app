@@ -65,7 +65,7 @@
         @media (max-width: 800px) {
             .hamburger-btn { display: flex; }
             .nav-pills { 
-                display: none; position: absolute; top: 100%; right: 15px; width: 200px;
+                display: none; position: absolute; top: 100%; right: 15px; width: 220px;
                 flex-direction: column; background: var(--header-bg); margin-top: 10px; padding: 10px; gap: 5px;
                 border-radius: 15px; box-shadow: var(--shadow); z-index: 999;
             }
@@ -185,12 +185,12 @@
     <div class="nav-right">
         <div class="nav-pills" id="menuPills">
             <button class="nav-btn active" id="btnPlan" onclick="mudarAba('planejamento')">Planejamento</button>
-            <button class="nav-btn" id="btnT" onclick="mudarAba('tarefas')">Tarefas</button>
-            <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Despesas</button>
-            <button class="nav-btn" id="btnF" onclick="mudarAba('faturas')">Faturas</button>
-            <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Mercadorias</button>
-            <button class="nav-btn" id="btnH" onclick="mudarAba('historico')">Histórico</button>
-            <button class="nav-btn" id="btnA" onclick="mudarAba('admin')">Admin</button>
+            <button class="nav-btn" id="btnT" onclick="mudarAba('tarefas')">Tarefas recorrentes</button>
+            <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Despesas recorrentes</button>
+            <button class="nav-btn" id="btnF" onclick="mudarAba('faturas')">Faturas do cartão</button>
+            <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Lista de supermercado</button>
+            <button class="nav-btn" id="btnH" onclick="mudarAba('historico')">Histórico geral</button>
+            <button class="nav-btn" id="btnA" onclick="mudarAba('admin')">Administrador</button>
         </div>
 
         <button id="btnHamburger" class="hamburger-btn" onclick="toggleMenu()" title="Menu">
