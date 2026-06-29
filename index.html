@@ -624,7 +624,12 @@
             const eV = prompt(`Valor?`, t.custo.toFixed(2).replace('.', ',')); if (eV === null) return;
             const p = eD.split('/'); const dSys = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
             const vP = parseFloat(eV.replace(/\./g, "").replace(",", ".")) || 0;
-            const cH = { ...t, custo: vP, concluida: true, criadoEm: new Date() }; delete cH.id; delete cH.recorrencia; 
+            
+            // ALTERAÇÃO: A data do histórico deve ser a data atual (do pagamento)
+            const dataPagamentoAtual = new Date().toLocaleDateString('sv-SE');
+            
+            const cH = { ...t, custo: vP, concluida: true, criadoEm: new Date(), dataLimite: dataPagamentoAtual }; 
+            delete cH.id; delete cH.recorrencia; 
             await addDoc(collection(db, "tarefas"), cH);
             await updateDoc(doc(db, "tarefas", id), { dataLimite: dSys, concluida: false, statusItens: {} });
         } else { await updateDoc(doc(db, "tarefas", id), { concluida: !stAtu }); }
