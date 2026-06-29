@@ -35,7 +35,7 @@
         .logo-img { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; background: white; border: 2px solid rgba(255,255,255,0.8); flex-shrink: 0; }
         .logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; }
         
-        /* MENU DA DIREITA (Hambúrguer + Sair) */
+        /* MENU DA DIREITA (Menu Desktop + Hambúrguer + Sair) */
         .nav-right { display: flex; flex-direction: row; align-items: center; gap: 8px; justify-content: flex-end; }
 
         .nav-pills { 
@@ -183,6 +183,16 @@
     </div>
     
     <div class="nav-right">
+        <div class="nav-pills" id="menuPills">
+            <button class="nav-btn active" id="btnPlan" onclick="mudarAba('planejamento')">Planejamento</button>
+            <button class="nav-btn" id="btnT" onclick="mudarAba('tarefas')">Tarefas</button>
+            <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Despesas</button>
+            <button class="nav-btn" id="btnF" onclick="mudarAba('faturas')">Faturas</button>
+            <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Mercadorias</button>
+            <button class="nav-btn" id="btnH" onclick="mudarAba('historico')">Histórico</button>
+            <button class="nav-btn" id="btnA" onclick="mudarAba('admin')">Admin</button>
+        </div>
+
         <button id="btnHamburger" class="hamburger-btn" onclick="toggleMenu()" title="Menu">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -198,16 +208,6 @@
                 <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
         </button>
-        
-        <div class="nav-pills" id="menuPills">
-            <button class="nav-btn active" id="btnPlan" onclick="mudarAba('planejamento')">Planejamento</button>
-            <button class="nav-btn" id="btnT" onclick="mudarAba('tarefas')">Tarefas</button>
-            <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Despesas</button>
-            <button class="nav-btn" id="btnF" onclick="mudarAba('faturas')">Faturas</button>
-            <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Mercadorias</button>
-            <button class="nav-btn" id="btnH" onclick="mudarAba('historico')">Histórico</button>
-            <button class="nav-btn" id="btnA" onclick="mudarAba('admin')">Admin</button>
-        </div>
     </div>
 </header>
 
