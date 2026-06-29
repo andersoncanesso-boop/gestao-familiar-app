@@ -188,7 +188,7 @@
             <button class="nav-btn" id="btnT" onclick="mudarAba('tarefas')">Tarefas recorrentes</button>
             <button class="nav-btn" id="btnC" onclick="mudarAba('cronograma')">Despesas recorrentes</button>
             <button class="nav-btn" id="btnF" onclick="mudarAba('faturas')">Faturas do cartão</button>
-            <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Lista de supermercado</button>
+            <button class="nav-btn" id="btnI" onclick="mudarAba('itens')">Lista de compras - supermercado</button>
             <button class="nav-btn" id="btnH" onclick="mudarAba('historico')">Histórico geral</button>
             <button class="nav-btn" id="btnA" onclick="mudarAba('admin')">Administrador</button>
         </div>
@@ -545,7 +545,6 @@
         });
     };
 
-    // FUNÇÃO EDITAR LISTA
     window.prepararEdicaoLista = (id) => {
         const t = tarefasGlobais.find(x => x.id === id);
         if(!t) return;
@@ -579,15 +578,12 @@
             idEdicao = null; 
             document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
             
-            // Navegação Editada
             if (subRaw !== "") mudarAba('itens');
             else if (cat === "CARTÃO") mudarAba('faturas');
             else if (rec !== "NENHUMA") {
                 if (valorDigitado > 0) mudarAba('cronograma');
                 else mudarAba('tarefas');
             }
-            // Se "NENHUMA" e sem itens/cartão, fica no Planejamento.
-
         } else {
             for (let i = 0; i < parcelas; i++) {
                 let dP = new Date(dataIni + 'T12:00:00');
@@ -602,14 +598,12 @@
                 });
             }
             
-            // Navegação Editada
             if (subRaw !== "") mudarAba('itens');
             else if (cat === "CARTÃO") mudarAba('faturas');
             else if (rec !== "NENHUMA") {
                 if (valorDigitado > 0) mudarAba('cronograma');
                 else mudarAba('tarefas');
             }
-            // Se "NENHUMA" e sem itens/cartão, fica no Planejamento.
         }
         
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = ""; document.getElementById('inputParcelas').value = "";
@@ -683,7 +677,7 @@
         const cC = document.getElementById('listaCustosCategoria'); cC.innerHTML = "";
         Object.keys(cats).sort().forEach(c => { const d = document.createElement('div'); d.className = 'cat-cost-item'; d.innerHTML = `<span>${c}</span><span class="cat-cost-value">R$ ${cats[c].toFixed(2)}</span>`; cC.appendChild(d); });
         const cM = document.getElementById('listaCustosMensais'); cM.innerHTML = "";
-        Object.keys(meses).reverse().slice(0, 12).forEach(m => { const d = document.createElement('div'); d.className = 'cat-cost-item'; d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cC.appendChild(d); });
+        Object.keys(meses).reverse().slice(0, 12).forEach(m => { const d = document.createElement('div'); d.className = 'cat-cost-item'; d.innerHTML = `<span>${m}</span><span style="color:#6366f1; font-weight:800">R$ ${meses[m].toFixed(2)}</span>`; cM.appendChild(d); });
         atualizarGraficos(meses, cats, anos);
     }
 
