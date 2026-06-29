@@ -393,6 +393,21 @@
     let chartM, chartC, chartA;
     const coresBlink = { GERAL: '#f1f5f9', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARTÃO: '#fae8ff', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
+    // LÓGICA: Travar Recorrência para CARTÃO
+    document.getElementById('selectCategoria').addEventListener('change', (e) => {
+        const selRec = document.getElementById('selectRecorrencia');
+        if (e.target.value === 'CARTÃO') {
+            selRec.value = 'MENSAL';
+            Array.from(selRec.options).forEach(opt => {
+                if (opt.value !== 'MENSAL') opt.disabled = true;
+            });
+        } else {
+            Array.from(selRec.options).forEach(opt => {
+                opt.disabled = false;
+            });
+        }
+    });
+
     // ================== FUNÇÃO DO MENU HAMBÚRGUER ==================
     window.toggleMenu = () => {
         document.getElementById('menuPills').classList.toggle('show');
