@@ -580,9 +580,10 @@
             idEdicao = null; 
             document.getElementById('btnSalvar').innerText = "Adicionar Tarefa";
             
-            if (cat === "CARTÃO") mudarAba('faturas');
+            if (subRaw !== "") mudarAba('itens');
+            else if (cat === "CARTÃO") mudarAba('faturas');
             else if (valorDigitado > 0 && rec !== "NENHUMA") mudarAba('cronograma');
-            else if (valorDigitado === 0) mudarAba('tarefas');
+            else mudarAba('tarefas');
 
         } else {
             for (let i = 0; i < parcelas; i++) {
@@ -598,17 +599,12 @@
                 });
             }
             
-            if (cat === "CARTÃO") mudarAba('faturas');
+            if (subRaw !== "") mudarAba('itens');
+            else if (cat === "CARTÃO") mudarAba('faturas');
             else if (valorDigitado > 0 && rec !== "NENHUMA") mudarAba('cronograma');
-            else if (valorDigitado === 0) mudarAba('tarefas');
+            else mudarAba('tarefas');
         }
         
-        if (subRaw !== "") {
-            const aviso = document.getElementById('avisoMercadoria');
-            aviso.classList.remove('hidden');
-            setTimeout(() => { aviso.classList.add('hidden'); }, 6000); 
-        }
-
         document.getElementById('inputTarefa').value = ""; document.getElementById('inputSubItens').value = ""; document.getElementById('inputCusto').value = ""; document.getElementById('inputParcelas').value = "";
         resetarCamposTempo();
     };
