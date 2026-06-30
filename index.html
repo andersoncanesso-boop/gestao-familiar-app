@@ -393,20 +393,28 @@
     let chartM, chartC, chartA;
     const coresBlink = { GERAL: '#f1f5f9', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARTÃO: '#fae8ff', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
-    // LÓGICA: Travar Recorrência para CARTÃO
-    document.getElementById('selectCategoria').addEventListener('change', (e) => {
-        const selRec = document.getElementById('selectRecorrencia');
-        if (e.target.value === 'CARTÃO') {
+    // LÓGICA DE CATEGORIAS: Travar Recorrência e Ativar Parcelas somente para CARTÃO
+    const catSelect = document.getElementById('selectCategoria');
+    const inputParc = document.getElementById('inputParcelas');
+    const selRec = document.getElementById('selectRecorrencia');
+
+    const updateCategoryLogic = () => {
+        if (catSelect.value === 'CARTÃO') {
             selRec.value = 'MENSAL';
             Array.from(selRec.options).forEach(opt => {
                 if (opt.value !== 'MENSAL') opt.disabled = true;
             });
+            inputParc.disabled = false;
         } else {
             Array.from(selRec.options).forEach(opt => {
                 opt.disabled = false;
             });
+            inputParc.disabled = true;
+            inputParc.value = "";
         }
-    });
+    };
+    catSelect.addEventListener('change', updateCategoryLogic);
+    updateCategoryLogic(); // Executa no carregamento
 
     // ================== FUNÇÃO DO MENU HAMBÚRGUER ==================
     window.toggleMenu = () => {
@@ -440,6 +448,8 @@
         const agora = new Date();
         document.getElementById('inputData').value = agora.toLocaleDateString('sv-SE');
         document.getElementById('inputHora').value = String(agora.getHours()).padStart(2, '0') + ":" + String(agora.getMinutes()).padStart(2, '0');
+        // Reset parcelas status
+        updateCategoryLogic();
     };
 
     onAuthStateChanged(auth, user => {
@@ -555,6 +565,7 @@
         document.getElementById('inputSubItens').value = match ? match[1] : "";
         document.getElementById('selectCategoria').value = t.categoria;
         document.getElementById('selectRecorrencia').value = t.recorrencia || "NENHUMA";
+        updateCategoryLogic();
         document.getElementById('btnSalvar').innerText = "Atualizar Lista";
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -652,6 +663,7 @@
         const iC = document.getElementById('inputCusto'); iC.value = t.custo.toFixed(2).replace(".", ","); mascaraDinheiro(iC);
         document.getElementById('inputData').value = t.dataLimite; document.getElementById('inputHora').value = t.hora || "";
         document.getElementById('selectCategoria').value = t.categoria; document.getElementById('selectRecorrencia').value = t.recorrencia || "NENHUMA";
+        updateCategoryLogic();
         document.getElementById('btnSalvar').innerText = "Atualizar"; window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
