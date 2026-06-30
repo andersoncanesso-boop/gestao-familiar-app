@@ -19,10 +19,10 @@
             --primary: #6366f1; --accent: #a855f7; --bg: #f3f4f6; --card-bg: #ffffff;
             --header-bg: #1e1b4b; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             --danger: #ef4444; --warning: #f59e0b;
+            --highlight-bg: #e0e7ff; /* Cor para destaque dos campos */
         }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #1f2937; margin: 0; padding-bottom: 40px; }
         
-        /* CABEÇALHO FORÇADO EM UMA LINHA */
         header {
             background: var(--header-bg); color: white; padding: 10px 15px; display: flex; 
             flex-direction: row; justify-content: space-between; align-items: center; 
@@ -35,17 +35,13 @@
         .logo-img { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; background: white; border: 2px solid rgba(255,255,255,0.8); flex-shrink: 0; }
         .logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; }
         
-        /* MENU DA DIREITA (Menu Desktop + Hambúrguer + Sair) */
         .nav-right { display: flex; flex-direction: row; align-items: center; gap: 8px; justify-content: flex-end; }
-
         .nav-pills { 
             display: flex; background: rgba(255, 255, 255, 0.1); padding: 4px; border-radius: 12px; gap: 2px;
             flex-wrap: wrap; justify-content: center;
         }
-
         .nav-btn { border: none; background: none; color: white; padding: 6px 8px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.62rem; transition: 0.3s; opacity: 0.7; }
         .nav-btn.active { background: var(--primary); opacity: 1; }
-
         .btn-logoff { 
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); color: white; 
             padding: 8px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;
@@ -53,7 +49,6 @@
         }
         .btn-logoff:hover { background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); }
 
-        /* ================= MENU MOBILE (HAMBURGER) ================= */
         .hamburger-btn {
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); 
             color: white; padding: 8px; border-radius: 10px; cursor: pointer; 
@@ -72,21 +67,20 @@
             .nav-pills.show { display: flex; animation: slideDown 0.2s ease-out; }
             .nav-btn { font-size: 0.9rem; padding: 12px; width: 100%; text-align: left; }
         }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* =========================================================== */
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
         .container { width: 92%; max-width: 480px; margin: 15px auto; }
         .hidden { display: none !important; }
         .form-card { background: white; padding: 20px; border-radius: 28px; margin-bottom: 25px; box-shadow: var(--shadow); position: relative;}
         
-        /* Ajuste de labels */
         .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
         .input-label { font-size: 0.7rem; font-weight: 700; color: #4b5563; margin-left: 5px; text-transform: uppercase; line-height: 1.2; }
         
-        input, select, button#btnSalvar { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; }
+        input, select, button#btnSalvar { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; transition: background 0.3s ease; }
+        
+        /* Classe de destaque */
+        .highlight-field { background-color: var(--highlight-bg) !important; border-color: var(--primary) !important; }
+        
         button#btnSalvar { background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
 
         #avisoMercadoria { 
@@ -97,16 +91,11 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .tarefa-card { background: white; border-radius: 22px; padding: 16px; display: flex; align-items: center; margin-bottom: 12px; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid transparent; transition: 0.3s; }
-        
         .card-vence-hoje { border-left-color: var(--warning) !important; background: #fffbeb; }
         .card-atrasada { border-left-color: var(--danger) !important; background: #fff5f5; }
         .card-mes-atual { background: #fefce8 !important; border-left-color: #facc15 !important; }
-        
         .alert-icon-hoje { color: var(--warning); font-weight: 800; font-size: 0.7rem; margin-left: 5px; }
         .alert-icon-atrasado { color: var(--danger); font-weight: 800; font-size: 0.7rem; margin-left: 5px; }
-
-        .card-blink { animation: card-pulse 2s infinite ease-in-out; }
-        @keyframes card-pulse { 0% { background-color: #ffffff; } 50% { background-color: var(--blink-color); } 100% { background-color: #ffffff; } }
         
         .check-area { width: 28px; height: 28px; border-radius: 10px; border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .check-area.done { background: #22c55e; border-color: #22c55e; color: white; }
@@ -426,9 +415,18 @@
     const catSelect = document.getElementById('selectCategoria');
     const inputParc = document.getElementById('inputParcelas');
     const selRec = document.getElementById('selectRecorrencia');
+    const inputCusto = document.getElementById('inputCusto');
 
     const updateCategoryLogic = () => {
-        if (catSelect.value === 'CARTÃO') {
+        const isCartao = catSelect.value === 'CARTÃO';
+        
+        // Destaque visual dos campos
+        [selRec, inputCusto, inputParc].forEach(el => {
+            if (isCartao) el.classList.add('highlight-field');
+            else el.classList.remove('highlight-field');
+        });
+
+        if (isCartao) {
             selRec.value = 'MENSAL';
             Array.from(selRec.options).forEach(opt => {
                 if (opt.value !== 'MENSAL') opt.disabled = true;
@@ -477,7 +475,7 @@
         const agora = new Date();
         document.getElementById('inputData').value = agora.toLocaleDateString('sv-SE');
         document.getElementById('inputHora').value = String(agora.getHours()).padStart(2, '0') + ":" + String(agora.getMinutes()).padStart(2, '0');
-        // Reset parcelas status
+        // Reset parcelas status e campos
         updateCategoryLogic();
     };
 
