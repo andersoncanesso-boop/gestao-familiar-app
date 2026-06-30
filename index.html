@@ -81,12 +81,17 @@
         .container { width: 92%; max-width: 480px; margin: 15px auto; }
         .hidden { display: none !important; }
         .form-card { background: white; padding: 20px; border-radius: 28px; margin-bottom: 25px; box-shadow: var(--shadow); position: relative;}
-        input, select, button#btnSalvar { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; }
-        button#btnSalvar { background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; }
+        
+        /* Ajuste de labels */
+        .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+        .input-label { font-size: 0.7rem; font-weight: 700; color: #4b5563; margin-left: 5px; text-transform: uppercase; }
+        
+        input, select, button#btnSalvar { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; }
+        button#btnSalvar { background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
 
         #avisoMercadoria { 
             background: var(--accent); color: white; border: none; padding: 10px; border-radius: 10px; 
-            font-size: 0.75rem; font-weight: 800; cursor: pointer; width: 100%; margin-top: -5px; margin-bottom: 15px;
+            font-size: 0.75rem; font-weight: 800; cursor: pointer; width: 100%; margin-top: 10px; margin-bottom: 15px;
             animation: fadeIn 0.5s ease;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -220,39 +225,63 @@
     <div id="telaApp" class="hidden">
         <div id="areaForm">
             <div class="form-card">
-                <input type="text" id="inputTarefa" placeholder="Descrição da tarefa ( Ex: Mercado, Loja, etc....)">
-                <input type="text" id="inputSubItens" placeholder="Itens Lista de compras - supermercado ( Separe por vírgula )">
-                <div style="display:flex; gap:8px;">
-                    <select id="selectCategoria" style="flex:1.5;">
-                        <option value="GERAL">📂 GERAL</option>
-                        <option value="ALIMENTAÇÃO">🧑‍🍳 ALIMENTAÇÃO</option>
-                        <option value="MERCADO">🛒 MERCADO</option>
-                        <option value="CARTÃO">💳 CARTÃO DE CRÉDITO</option>
-                        <option value="CARRO">🚗 CARRO</option>
-                        <option value="IGREJA">⛪ IGREJA/PASCOM</option>
-                        <option value="EDUCAÇÃO">📚 EDUCAÇÃO</option>
-                        <option value="FAXINA">🧹 FAXINA</option>
-                        <option value="PET">🐾 PET</option>
-                        <option value="MANUTENÇÃO">🛠️ MANUTENÇÃO</option>
-                        <option value="SAÚDE">💊 SAÚDE</option>
-                        <option value="CONTAS">💰 CONTAS</option>
-                        <option value="LAZER">🎈 LAZER</option>
-                        <option value="FÉRIAS">🌴 FÉRIAS</option>
-                    </select>
-                    <select id="selectRecorrencia" style="flex:1;">
-                        <option value="NENHUMA">🔄 Nenhuma</option>
-                        <option value="DIÁRIA">📅 Diária</option>
-                        <option value="SEMANAL">📅 Semanal</option>
-                        <option value="MENSAL">📅 Mensal</option>
-                    </select>
+                <div class="form-group">
+                    <label class="input-label">Descrição</label>
+                    <input type="text" id="inputTarefa" placeholder="Descrição da tarefa ( Ex: Mercado, Loja, etc....)">
+                </div>
+                <div class="form-group">
+                    <label class="input-label">Itens</label>
+                    <input type="text" id="inputSubItens" placeholder="Itens Lista de compras - supermercado ( Separe por vírgula )">
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" id="inputCusto" placeholder="Valor a pagar" style="flex:1.5;" oninput="mascaraDinheiro(this)">
-                    <input type="number" id="inputParcelas" placeholder="Parcelas Cartão de Crédito" style="flex:1;" min="1" max="60">
+                    <div class="form-group" style="flex:1.5;">
+                        <label class="input-label">Categoria</label>
+                        <select id="selectCategoria">
+                            <option value="GERAL">📂 GERAL</option>
+                            <option value="ALIMENTAÇÃO">🧑‍🍳 ALIMENTAÇÃO</option>
+                            <option value="MERCADO">🛒 MERCADO</option>
+                            <option value="CARTÃO">💳 CARTÃO DE CRÉDITO</option>
+                            <option value="CARRO">🚗 CARRO</option>
+                            <option value="IGREJA">⛪ IGREJA/PASCOM</option>
+                            <option value="EDUCAÇÃO">📚 EDUCAÇÃO</option>
+                            <option value="FAXINA">🧹 FAXINA</option>
+                            <option value="PET">🐾 PET</option>
+                            <option value="MANUTENÇÃO">🛠️ MANUTENÇÃO</option>
+                            <option value="SAÚDE">💊 SAÚDE</option>
+                            <option value="CONTAS">💰 CONTAS</option>
+                            <option value="LAZER">🎈 LAZER</option>
+                            <option value="FÉRIAS">🌴 FÉRIAS</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="input-label">Recorrência</label>
+                        <select id="selectRecorrencia">
+                            <option value="NENHUMA">🔄 Nenhuma</option>
+                            <option value="DIÁRIA">📅 Diária</option>
+                            <option value="SEMANAL">📅 Semanal</option>
+                            <option value="MENSAL">📅 Mensal</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <input type="date" id="inputData" style="flex:1.5;">
-                    <input type="time" id="inputHora" style="flex:1;">
+                    <div class="form-group" style="flex:1.5;">
+                        <label class="input-label">Valor</label>
+                        <input type="text" id="inputCusto" placeholder="Valor a pagar" oninput="mascaraDinheiro(this)">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="input-label">Parcelas</label>
+                        <input type="number" id="inputParcelas" placeholder="Parcelas Cartão de Crédito" min="1" max="60">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <div class="form-group" style="flex:1.5;">
+                        <label class="input-label">Data</label>
+                        <input type="date" id="inputData">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="input-label">Hora</label>
+                        <input type="time" id="inputHora">
+                    </div>
                 </div>
                 <button id="btnSalvar">Adicionar Tarefa</button>
                 <button id="avisoMercadoria" class="hidden" onclick="mudarAba('itens')">🛒 Itens adicionados! Ver na aba Mercadorias</button>
