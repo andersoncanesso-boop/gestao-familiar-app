@@ -84,7 +84,7 @@
         
         /* Ajuste de labels */
         .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-        .input-label { font-size: 0.7rem; font-weight: 700; color: #4b5563; margin-left: 5px; text-transform: uppercase; }
+        .input-label { font-size: 0.7rem; font-weight: 700; color: #4b5563; margin-left: 5px; text-transform: uppercase; line-height: 1.2; }
         
         input, select, button#btnSalvar { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; }
         button#btnSalvar { background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
@@ -230,8 +230,8 @@
                     <input type="text" id="inputTarefa" placeholder="Descrição da tarefa ( Ex: Mercado, Loja, etc....)">
                 </div>
                 <div class="form-group">
-                    <label class="input-label">Itens</label>
-                    <input type="text" id="inputSubItens" placeholder="Itens Lista de compras - supermercado ( Separe por vírgula )">
+                    <label class="input-label">Lista de compras - supermercado<br>( Separe por vírgulas )</label>
+                    <input type="text" id="inputSubItens" placeholder="Itens para a lista...">
                 </div>
                 <div style="display:flex; gap:8px;">
                     <div class="form-group" style="flex:1.5;">
@@ -269,8 +269,8 @@
                         <input type="text" id="inputCusto" placeholder="Valor a pagar" oninput="mascaraDinheiro(this)">
                     </div>
                     <div class="form-group" style="flex:1;">
-                        <label class="input-label">Parcelas</label>
-                        <input type="number" id="inputParcelas" placeholder="Parcelas Cartão de Crédito" min="1" max="60">
+                        <label class="input-label">Cartão de Crédito</label>
+                        <input type="number" id="inputParcelas" placeholder="Qtd Parcelas" min="1" max="60">
                     </div>
                 </div>
                 <div style="display:flex; gap:8px;">
