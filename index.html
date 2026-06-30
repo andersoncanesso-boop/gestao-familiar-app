@@ -23,6 +23,7 @@
         }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #1f2937; margin: 0; padding-bottom: 40px; }
         
+        /* CABEÇALHO FORÇADO EM UMA LINHA */
         header {
             background: var(--header-bg); color: white; padding: 10px 15px; display: flex; 
             flex-direction: row; justify-content: space-between; align-items: center; 
@@ -35,6 +36,7 @@
         .logo-img { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; background: white; border: 2px solid rgba(255,255,255,0.8); flex-shrink: 0; }
         .logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; }
         
+        /* MENU DA DIREITA (Menu Desktop + Hambúrguer + Sair) */
         .nav-right { display: flex; flex-direction: row; align-items: center; gap: 8px; justify-content: flex-end; }
         .nav-pills { 
             display: flex; background: rgba(255, 255, 255, 0.1); padding: 4px; border-radius: 12px; gap: 2px;
@@ -219,8 +221,8 @@
                     <input type="text" id="inputTarefa" placeholder="Descrição da tarefa ( Ex: Mercado, Loja, etc....)">
                 </div>
                 <div class="form-group">
-                    <label class="input-label">Lista de compras - supermercado<br>( Separe por vírgulas )</label>
-                    <input type="text" id="inputSubItens" placeholder="Itens para a lista...">
+                    <label class="input-label">Lista de compras - supermercado</label>
+                    <input type="text" id="inputSubItens" placeholder="Itens para a lista.... ( separe por virgulas )">
                 </div>
                 <div style="display:flex; gap:8px;">
                     <div class="form-group" style="flex:1.5;">
