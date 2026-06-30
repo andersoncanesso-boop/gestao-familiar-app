@@ -220,8 +220,8 @@
     <div id="telaApp" class="hidden">
         <div id="areaForm">
             <div class="form-card">
-                <input type="text" id="inputTarefa" placeholder="Descrição (Ex: Mercado)">
-                <input type="text" id="inputSubItens" placeholder="Itens (Separe por vírgula)">
+                <input type="text" id="inputTarefa" placeholder="Descrição da tarefa ( Ex: Mercado, Loja, etc....)">
+                <input type="text" id="inputSubItens" placeholder="Itens Lista de compras - supermercado ( Separe por vírgula )">
                 <div style="display:flex; gap:8px;">
                     <select id="selectCategoria" style="flex:1.5;">
                         <option value="GERAL">📂 GERAL</option>
@@ -247,8 +247,8 @@
                     </select>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" id="inputCusto" placeholder="VALOR TOTAL DA COMPRA" style="flex:1.5;" oninput="mascaraDinheiro(this)">
-                    <input type="number" id="inputParcelas" placeholder="Qtd Parcelas" style="flex:1;" min="1" max="60">
+                    <input type="text" id="inputCusto" placeholder="Valor a pagar" style="flex:1.5;" oninput="mascaraDinheiro(this)">
+                    <input type="number" id="inputParcelas" placeholder="Parcelas Cartão de Crédito" style="flex:1;" min="1" max="60">
                 </div>
                 <div style="display:flex; gap:8px;">
                     <input type="date" id="inputData" style="flex:1.5;">
