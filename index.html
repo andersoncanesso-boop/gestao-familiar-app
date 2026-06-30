@@ -19,7 +19,7 @@
             --primary: #6366f1; --accent: #a855f7; --bg: #f3f4f6; --card-bg: #ffffff;
             --header-bg: #1e1b4b; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             --danger: #ef4444; --warning: #f59e0b;
-            --highlight-bg: #e0e7ff;
+            --highlight-bg: #e0e7ff; 
         }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #1f2937; margin: 0; padding-bottom: 40px; }
         
@@ -77,6 +77,7 @@
         .input-label { font-size: 0.7rem; font-weight: 700; color: #4b5563; margin-left: 5px; text-transform: uppercase; line-height: 1.2; }
         
         input, select, button#btnSalvar { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; transition: background 0.3s ease; }
+        
         .highlight-field { background-color: var(--highlight-bg) !important; border-color: var(--primary) !important; }
         
         button#btnSalvar { background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
@@ -414,6 +415,7 @@
     const inputParc = document.getElementById('inputParcelas');
     const selRec = document.getElementById('selectRecorrencia');
     const inputCusto = document.getElementById('inputCusto');
+    const inputSubItens = document.getElementById('inputSubItens');
 
     const updateCategoryLogic = (e) => {
         const isCartao = catSelect.value === 'CARTÃO';
@@ -423,7 +425,11 @@
             else el.classList.remove('highlight-field');
         });
 
+        // Bloqueio do campo Itens
+        inputSubItens.disabled = isCartao;
+
         if (isCartao) {
+            inputSubItens.value = "";
             selRec.value = 'MENSAL';
             Array.from(selRec.options).forEach(opt => {
                 if (opt.value !== 'MENSAL') opt.disabled = true;
@@ -446,15 +452,14 @@
     };
 
     const popularAnos = () => {
-        const anoAtual = new Date().getFullYear();
         const selects = [document.getElementById('filtroAnoHist'), document.getElementById('adminFiltroAno'), document.getElementById('filtroAnoFatura')];
         selects.forEach(sel => {
             if (!sel) return;
             sel.innerHTML = "";
-            for (let i = 2025; i <= anoAtual + 5; i++) {
+            for (let i = 2025; i <= 2035; i++) { // Alterado para 2035
                 const opt = document.createElement('option');
                 opt.value = i; opt.innerText = i;
-                if (i === anoAtual) opt.selected = true;
+                if (i === new Date().getFullYear()) opt.selected = true;
                 sel.appendChild(opt);
             }
         });
