@@ -19,7 +19,7 @@
             --primary: #6366f1; --accent: #a855f7; --bg: #f3f4f6; --card-bg: #ffffff;
             --header-bg: #1e1b4b; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             --danger: #ef4444; --warning: #f59e0b;
-            --highlight-bg: #e0e7ff; 
+            --highlight-bg: #e0e7ff;
         }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #1f2937; margin: 0; padding-bottom: 40px; }
         
@@ -77,7 +77,6 @@
         .input-label { font-size: 0.7rem; font-weight: 700; color: #4b5563; margin-left: 5px; text-transform: uppercase; line-height: 1.2; }
         
         input, select, button#btnSalvar { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; transition: background 0.3s ease; }
-        
         .highlight-field { background-color: var(--highlight-bg) !important; border-color: var(--primary) !important; }
         
         button#btnSalvar { background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
@@ -322,13 +321,14 @@
 
         <div id="areaFaturas" class="hidden">
             <div class="fatura-header">
-                <span style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase;">Total da Fatura</span>
+                <span style="font-size: 0.8rem; opacity: 0.9; text-transform: uppercase;">Valor total</span>
                 <span class="fatura-valor" id="valorTotalFatura">R$ 0,00</span>
             </div>
             <div class="filter-section">
-                <span class="filter-label">Consultar Outros Meses</span>
+                <span class="filter-label">Mês</span>
                 <div style="display:flex; gap:10px;">
                     <select id="filtroMesFatura" class="filter-select-hist" onchange="renderizar()" style="flex:1;">
+                        <option value="TODOS">TODOS</option>
                         <option value="01">Janeiro</option><option value="02">Fevereiro</option>
                         <option value="03">Março</option><option value="04">Abril</option>
                         <option value="05">Maio</option><option value="06">Junho</option>
@@ -410,7 +410,6 @@
     let chartM, chartC, chartA;
     const coresBlink = { GERAL: '#f1f5f9', ALIMENTAÇÃO: '#ffedd5', MERCADO: '#dcfce7', CARTÃO: '#fae8ff', CARRO: '#fee2e2', IGREJA: '#fef3c7', EDUCAÇÃO: '#fae8ff', FAXINA: '#f8fafc', PET: '#ffedd5', MANUTENÇÃO: '#e2e8f0', SAÚDE: '#fee2e2', CONTAS: '#d1fae5', LAZER: '#fde68a', FÉRIAS: '#e0f2fe' };
 
-    // LÓGICA DE CATEGORIAS: Travar Recorrência e Ativar Parcelas somente para CARTÃO
     const catSelect = document.getElementById('selectCategoria');
     const inputParc = document.getElementById('inputParcelas');
     const selRec = document.getElementById('selectRecorrencia');
@@ -419,7 +418,6 @@
     const updateCategoryLogic = (e) => {
         const isCartao = catSelect.value === 'CARTÃO';
         
-        // Destaque visual dos campos
         [selRec, inputCusto, inputParc].forEach(el => {
             if (isCartao) el.classList.add('highlight-field');
             else el.classList.remove('highlight-field');
@@ -432,9 +430,7 @@
             });
             inputParc.disabled = false;
         } else {
-            // Se houve interação do usuário (e existe evento), reseta para NENHUMA
             if(e) selRec.value = 'NENHUMA';
-            
             Array.from(selRec.options).forEach(opt => {
                 opt.disabled = false;
             });
@@ -443,13 +439,11 @@
         }
     };
     catSelect.addEventListener('change', updateCategoryLogic);
-    updateCategoryLogic(); // Executa no carregamento
+    updateCategoryLogic(); 
 
-    // ================== FUNÇÃO DO MENU HAMBÚRGUER ==================
     window.toggleMenu = () => {
         document.getElementById('menuPills').classList.toggle('show');
     };
-    // ===============================================================
 
     const popularAnos = () => {
         const anoAtual = new Date().getFullYear();
@@ -488,7 +482,6 @@
             document.getElementById('appHeader').classList.remove('hidden');
             const agora = new Date();
             document.getElementById('adminFiltroMes').value = String(agora.getMonth() + 1).padStart(2, '0');
-            document.getElementById('filtroMesFatura').value = String(agora.getMonth() + 1).padStart(2, '0');
             resetarCamposTempo();
             onSnapshot(query(collection(db, "tarefas"), orderBy("criadoEm", "desc")), snap => {
                 tarefasGlobais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -552,8 +545,15 @@
         else if (abaAtiva === 'tarefas') filtradas = tarefasGlobais.filter(t => !t.concluida && t.categoria !== 'CARTÃO' && t.recorrencia && t.recorrencia !== "NENHUMA" && (t.custo === 0 || !t.custo));
         else if (abaAtiva === 'cronograma') filtradas = tarefasGlobais.filter(t => !t.concluida && t.categoria !== 'CARTÃO' && t.recorrencia && t.recorrencia !== "NENHUMA" && t.custo > 0);
         else if (abaAtiva === 'faturas') {
-            const mF = document.getElementById('filtroMesFatura').value, aF = document.getElementById('filtroAnoFatura').value;
-            filtradas = tarefasGlobais.filter(t => !t.concluida && t.categoria === 'CARTÃO' && t.dataLimite.startsWith(`${aF}-${mF}`));
+            const mF = document.getElementById('filtroMesFatura').value;
+            const aF = document.getElementById('filtroAnoFatura').value;
+            
+            filtradas = tarefasGlobais.filter(t => {
+                if(t.concluida || t.categoria !== 'CARTÃO') return false;
+                const matchesYear = t.dataLimite.startsWith(aF);
+                const matchesMonth = (mF === 'TODOS' || t.dataLimite.includes(`-${mF}-`));
+                return matchesYear && matchesMonth;
+            });
             const totalF = filtradas.reduce((acc, t) => acc + (t.custo || 0), 0);
             document.getElementById('valorTotalFatura').innerText = `R$ ${totalF.toFixed(2)}`;
         } else if (abaAtiva === 'historico') {
