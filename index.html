@@ -19,11 +19,10 @@
             --primary: #6366f1; --accent: #a855f7; --bg: #f3f4f6; --card-bg: #ffffff;
             --header-bg: #1e1b4b; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             --danger: #ef4444; --warning: #f59e0b;
-            --highlight-bg: #e0e7ff; /* Cor para destaque dos campos */
+            --highlight-bg: #e0e7ff; 
         }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #1f2937; margin: 0; padding-bottom: 40px; }
         
-        /* CABEÇALHO FORÇADO EM UMA LINHA */
         header {
             background: var(--header-bg); color: white; padding: 10px 15px; display: flex; 
             flex-direction: row; justify-content: space-between; align-items: center; 
@@ -36,7 +35,6 @@
         .logo-img { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; background: white; border: 2px solid rgba(255,255,255,0.8); flex-shrink: 0; }
         .logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; }
         
-        /* MENU DA DIREITA (Menu Desktop + Hambúrguer + Sair) */
         .nav-right { display: flex; flex-direction: row; align-items: center; gap: 8px; justify-content: flex-end; }
         .nav-pills { 
             display: flex; background: rgba(255, 255, 255, 0.1); padding: 4px; border-radius: 12px; gap: 2px;
@@ -80,7 +78,6 @@
         
         input, select, button#btnSalvar { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; font-size: 0.9rem; transition: background 0.3s ease; }
         
-        /* Classe de destaque */
         .highlight-field { background-color: var(--highlight-bg) !important; border-color: var(--primary) !important; }
         
         button#btnSalvar { background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; }
@@ -419,7 +416,7 @@
     const selRec = document.getElementById('selectRecorrencia');
     const inputCusto = document.getElementById('inputCusto');
 
-    const updateCategoryLogic = () => {
+    const updateCategoryLogic = (e) => {
         const isCartao = catSelect.value === 'CARTÃO';
         
         // Destaque visual dos campos
@@ -435,6 +432,9 @@
             });
             inputParc.disabled = false;
         } else {
+            // Se houve interação do usuário (e existe evento), reseta para NENHUMA
+            if(e) selRec.value = 'NENHUMA';
+            
             Array.from(selRec.options).forEach(opt => {
                 opt.disabled = false;
             });
@@ -477,7 +477,6 @@
         const agora = new Date();
         document.getElementById('inputData').value = agora.toLocaleDateString('sv-SE');
         document.getElementById('inputHora').value = String(agora.getHours()).padStart(2, '0') + ":" + String(agora.getMinutes()).padStart(2, '0');
-        // Reset parcelas status e campos
         updateCategoryLogic();
     };
 
